@@ -57,6 +57,7 @@ class MapBuilder(HasTraits):
     def build_map(self, data_c):
         """
         """
+        self.mode = 'sort'
         made_copy = False
         raw_len = len(data_c)
         current_pos = raw_len % self.length
@@ -92,7 +93,10 @@ class MapBuilder(HasTraits):
             else:
                 self.first_index = self.length*raw_len/self.length
         else:
-            index = numpy.lexsort((data_x, data_y))
+            if self.transpose:
+                index = numpy.lexsort((data_x, data_y))
+            else:
+                index = numpy.lexsort((data_y, data_x))
             data_c = data_c[index]
             made_copy = True
 
@@ -169,7 +173,7 @@ class MapBuilder(HasTraits):
                                 max(data_y)*numpy.ones(len_to_add))
                 print 'map_builder update sort len_to_add = {}'.format(len_to_add)
 
-            index = numpy.lexsort((data_x, data_y))
+            index = numpy.lexsort((data_y,data_x))
             aux = data_c[index]
             raw_data = True
             print 'map_builder update sort len, error = {},{}'.format(len(data_c),len(aux))
