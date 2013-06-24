@@ -189,9 +189,9 @@ class MapBuilder(HasTraits):
             dimy = len(set(self._data_y))
 
             if self._data_x[0] == self._data_x[1]:
-                self.order = 'F'
                 self.length = dimy
-                if len(self._data_y) < dimy:
+                self.transpose = False
+                if len(self._data_y) > dimy:
                     self._algo_known = True
                     if self._data_y[0] == self._data_y[dimy]:
                         self.mode = 'basic'
@@ -210,9 +210,9 @@ class MapBuilder(HasTraits):
                     self._algo_known = False
 
             elif self._data_y[0] == self._data_y[1]:
-                self.order = 'C'
                 self.length = dimx
-                if len(self._data_y) < dimy:
+                self.transpose = True
+                if len(self._data_y) > dimy:
                     self._algo_known = True
                     if self._data_x[0] == self._data_x[dimx]:
                         self.mode = 'basic'
@@ -224,10 +224,8 @@ class MapBuilder(HasTraits):
                             self.parity = -1
                     else:
                         self.mode = 'sort'
-                        self.order = 'C'
                 else:
                     self.mode = 'sort'
-                    self.order = 'F'
                     self._algo_known = False
 
             if dimy == 1 or dimx == 1:
