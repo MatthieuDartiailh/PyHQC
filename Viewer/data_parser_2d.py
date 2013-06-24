@@ -197,8 +197,8 @@ class DataParser2D(HasTraits):
 
                 if len([field for field in fields if field in xyc]) == len(xyc)\
                                                     and self.auto_update:
-
-                    self._process_update()
+                    update_thread = Thread(target = self._process_update)
+                    update_thread.start()
 
             if key == 'replaced':
                 if 'main' in new[key]:

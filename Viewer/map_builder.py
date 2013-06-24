@@ -14,7 +14,7 @@ class MapBuilder(HasTraits):
     """
 
     mode = Enum('basic', 'reverse', 'sort')
-    order = Enum('F', 'C')
+    transpose = Bool
     length = Int
     first_index = Int
     available_length = Int
@@ -42,7 +42,7 @@ class MapBuilder(HasTraits):
         self._data_x = numpy.concatenate((self._data_x, update_x))
         if not self._algo_known:
             self._compute_algo()
-        elif self.order == 'C':
+        elif not self.transpose:
             self.length = len(set(self._data_x))
 
     def update_data_y(self, update_y):
@@ -51,7 +51,7 @@ class MapBuilder(HasTraits):
         self._data_y = numpy.concatenate((self._data_y, update_y))
         if not self._algo_known:
             self._compute_algo()
-        elif self.order == 'F':
+        elif self.transpose:
             self.length = len(set(self._data_y))
 
     def build_map(self, data_c):
@@ -96,8 +96,12 @@ class MapBuilder(HasTraits):
             data_c = data_c[index]
             made_copy = True
 
-        return numpy.reshape(data_c,(self.length, -1), order = self.order),\
-                made_copy
+        if not self.transpose:
+            return numpy.reshape(data_c,(self.length, -1), order = 'F'),\
+                    made_copy
+        else:
+            return numpy.reshape(data_c,(self.length, -1), order = 'F').T,\
+                    made_copy
 
     def update_map(self, update, data_plot, data):
         """
@@ -125,9 +129,10 @@ class MapBuilder(HasTraits):
 
         elif self.mode == 'reverse':
             if self.parity == 1:
-                aux[self.first_index:self.first_index+size-1] = update[0:size-1]
+                aux[self.first_index:self.first_index+size] = update[0:size]
             else:
-                aux[self.first_inde:self.first_index+size-1] = update[size-1:0]
+                aux[self.first_inde:self.first_index+size] = \
+                                                        update.reverse[0:size]
             if size != len_update:
                 len_to_add = self.length*\
                                 ((len_update-size+self.length-1)/self.length)
@@ -147,14 +152,33 @@ class MapBuilder(HasTraits):
                 self.parity = (-1)**(self.first_index/self.length)
 
             if self.avalable_length != 0:
-                aux[self.first_index+len_update:len(aux)-1] = update[-1]
+                aux[self.first_index+len_update:len(aux)] = update[-1]
 
         else:
-            index = numpy.lexsort((self._data_x, self._data_y))
-            aux = data[index]
-            raw_data = True
+            data_c = data
+            data_x = self._data_x
+            data_y = self._data_y
+            if len(data_c) % self.length != 0:
+                last = data_c[-1]
+                len_to_add = self.length - len(data_c) % self.length
+                data_c = numpy.append(data_c,
+                                last*numpy.ones(len_to_add))
+                data_x = numpy.append(data_x,
+                                max(data_x)*numpy.ones(len_to_add))
+                data_y = numpy.append(data_y,
+                                max(data_y)*numpy.ones(len_to_add))
+                print 'map_builder update sort len_to_add = {}'.format(len_to_add)
 
-        return numpy.reshape(aux, (self.length,-1), order = self.order),\
+            index = numpy.lexsort((data_x, data_y))
+            aux = data_c[index]
+            raw_data = True
+            print 'map_builder update sort len, error = {},{}'.format(len(data_c),len(aux))
+
+        if not self.transpose:
+            return numpy.reshape(aux, (self.length,-1), order = 'F'),\
+                                                                    raw_data
+        else:
+            return numpy.reshape(aux,(self.length, -1), order = 'F').T,\
                                                                     raw_data
 
     def _compute_algo(self):
@@ -205,6 +229,9 @@ class MapBuilder(HasTraits):
                     self.mode = 'sort'
                     self.order = 'F'
                     self._algo_known = False
+
+            if dimy == 1 or dimx == 1:
+                self._algo_known = False
 
 if __name__ == '__main__':
     from pylab import pcolor, colorbar, show, figure

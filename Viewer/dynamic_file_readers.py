@@ -21,7 +21,7 @@ class DynamicFileReader(AbstractDynamicFileReader):
     """
     """
 
-    updating_time = Float(0.5)
+    updating_time = Float(5.0)
     data_update = Event()
 
     skip_rows = Int(0)
