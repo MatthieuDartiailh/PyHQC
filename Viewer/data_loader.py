@@ -167,20 +167,17 @@ class DataLoader(HasPreferenceTraits):
                  **kwarg):
 
         super(DataLoader, self).__init__(**kwarg)
-        self.file_chooser = DirectoryAndFileChooser(pref_name = '''Directory
-                                                    and file chooser''',
-                                                    pref_parent = self)
+        self.file_chooser = DirectoryAndFileChooser(pref_parent = self,
+                                    pref_name = 'Directory and file chooser')
         self.data_holder = data_holder
         self.edit_static = edit_static
         self.edit_dynamic = edit_dynamic
         self.file_reader_static = StaticFileReader(_use_thread = True,
-                                                   pref_name = '''Static file
-                                                   reader''',
-                                                   pref_parent = self)
+                                            pref_name = 'Static file reader',
+                                            pref_parent = self)
         self.file_reader_dynamic = DynamicFileReader(self.file_reader_static,
-                                                     pref_name = '''Dynamic file
-                                                     reader''',
-                                                     pref_parent = self)
+                                        pref_name = 'Dynamic file reader',
+                                        pref_parent = self)
         self.preference_init()
 
     @on_trait_change('file_chooser:file')

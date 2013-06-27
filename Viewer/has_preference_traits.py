@@ -92,7 +92,8 @@ class HasPreferenceTraits(HasTraits):
             self._pref_lock = RLock()
             self._root = self
             if default_file is not None:
-                self._preferences = ConfigObj(default_file)
+                self._preferences = ConfigObj(default_file,
+                                              indent_type = '    ')
             else:
                 self._preferences = ConfigObj()
 

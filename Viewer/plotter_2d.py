@@ -6,19 +6,19 @@ from traits.api\
     import  Str, Instance, Bool, on_trait_change, Float, Enum, Trait, Callable
 
 from traitsui.api\
-    import View, UItem, VGroup, Group
+    import View, UItem, VGroup, Group, Item, InstanceEditor
 
 from enable.component_editor\
     import ComponentEditor
 
 from chaco.api\
     import ArrayPlotData, ColorBar, LinearMapper, HPlotContainer,\
-        GridDataSource, ImagePlot, CMapImagePlot,ContourPolyPlot
+        GridDataSource, ImagePlot, CMapImagePlot, ContourPolyPlot
 
 from chaco.tools.api\
     import PanTool
 
-from chaco.default_colormaps import *
+from chaco.default_colormaps import color_map_name_dict, Greys
 
 from numpy import cosh, exp, linspace, meshgrid, tanh
 
@@ -262,8 +262,8 @@ class Plotter2D(HasPreferenceTraits):
 
 class AutoPlotter2D(Plotter2D):
 
-    def __init__(self):
-        super(AutoPlotter2D, self).__init__()
+    def __init__(self, **kwargs):
+        super(AutoPlotter2D, self).__init__(**kwargs)
         self.on_trait_change(self.auto_plot_data, 'data:data_changed',
                              dispatch = 'ui')
 

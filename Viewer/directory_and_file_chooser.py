@@ -44,9 +44,8 @@ class DirectoryAndFileChooser(HasPreferenceTraits):
                     ),
                 resizable = True)
 
-    def __init__(self, pref_name = None, pref_parent = None, **kwargs):
-        super(DirectoryAndFileChooser, self).__init__(pref_name, pref_parent,
-                                                        **kwargs)
+    def __init__(self, **kwargs):
+        super(DirectoryAndFileChooser, self).__init__(**kwargs)
         self.preference_init()
 
     @on_trait_change('directory')
@@ -59,7 +58,11 @@ class DirectoryAndFileChooser(HasPreferenceTraits):
     def update_list_file(self):
         """
         """
-        self.file_list = os.listdir(self.directory)
+        # sorted files only
+        path = self.directory
+        files = sorted(f for f in os.listdir(path)
+                           if os.path.isfile(os.path.join(path, f)))
+        self.file_list = files
 
     @on_trait_change('file_name')
     def build_file(self):
