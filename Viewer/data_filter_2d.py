@@ -59,34 +59,45 @@ class DataFilter2D(HasTraits):
 
         return data_list, made_copy
 
-    def filter_update(self, update_list):
+    def filter_update(self, update_list, filter_update = None):
         """
         """
         made_copy = False
         if self.active and\
                 self.filter_column is not None and self.value is not None:
-            aux = self.data_holder.get_update(self.filter_column)
-            mask = (aux == self.value)
+            if filter_update is None:
+                filter_update = self.data_holder.get_update(self.filter_column)
+            mask = (filter_update == self.value)
             update_list = [update[mask] for update in update_list]
             made_copy = True
 
         return update_list, made_copy
 
+    def update_filter_values(self, update):
+        self.values.update(set(update))
+
     @on_trait_change('filter_column')
-    def _update_values_from_filter(self, new):
+    def new_filter_column(self):
         """
         """
-        self.values = list(set(self.data_holder.get_data(new)))
+        if self.filter_column:
+            old = self.value
+            data = self.data_holder.get_data(self.filter_column)
+            list_values = list(set(data))
+            list_values.sort()
+            self.values = list_values
+            if old in list_values:
+                self.value = old
 
     @on_trait_change('value, active')
     def _request_replot(self, name, new):
         """
         """
-        if self.active and\
-                self.filter_column is not None and self.value is not None:
-            self.request_replot = {'filter_'+name : new}
-        elif not self.active:
-            self.request_replot = {'filter_'+name : new}
+        if self.filter_column is not None and self.value is not None:
+            if self.active:
+                self.request_replot = {'filter_'+name : new}
+            elif not self.active:
+                self.request_replot = {'filter_'+name : new}
 
 if __name__ == "__main__":
     DataFilter2D().configure_traits()

@@ -42,7 +42,7 @@ class MapBuilder(HasTraits):
         self._data_x = numpy.concatenate((self._data_x, update_x))
         if not self._algo_known:
             self._compute_algo()
-        elif not self.transpose:
+        elif self.transpose:
             self.length = len(set(self._data_x))
 
     def update_data_y(self, update_y):
@@ -51,13 +51,12 @@ class MapBuilder(HasTraits):
         self._data_y = numpy.concatenate((self._data_y, update_y))
         if not self._algo_known:
             self._compute_algo()
-        elif self.transpose:
+        elif not self.transpose:
             self.length = len(set(self._data_y))
 
     def build_map(self, data_c):
         """
         """
-        self.mode = 'sort'
         made_copy = False
         raw_len = len(data_c)
         current_pos = raw_len % self.length
@@ -73,6 +72,7 @@ class MapBuilder(HasTraits):
             data_y = numpy.append(data_y,
                             max(data_y)*numpy.ones(self.length - current_pos))
             self.made_copy = True
+
         self.available_length = len(data_c) - raw_len
         print 'map builder buildmap len = {}'.format(len(data_c))
 
@@ -92,6 +92,7 @@ class MapBuilder(HasTraits):
                 self.first_index = raw_len
             else:
                 self.first_index = self.length*raw_len/self.length
+
         else:
             if self.transpose:
                 index = numpy.lexsort((data_x, data_y))
@@ -101,7 +102,7 @@ class MapBuilder(HasTraits):
             made_copy = True
 
         if not self.transpose:
-            return numpy.reshape(data_c,(self.length, -1), order = 'F'),\
+            return numpy.reshape(data_c, (self.length, -1), order = 'F'),\
                     made_copy
         else:
             return numpy.reshape(data_c,(self.length, -1), order = 'F').T,\
@@ -111,7 +112,10 @@ class MapBuilder(HasTraits):
         """
         """
         raw_data = False
-        aux = numpy.ravel(data_plot, order = self.order)
+        if self.transpose:
+            aux = numpy.ravel(data_plot.T, order = 'F')
+        else:
+            aux = numpy.ravel(data_plot, order = 'F')
         len_update = len(update)
         size = min((self.available_length, len_update))
         print 'map_builder update size, len_update = {},{}'.format(size,len_update)
@@ -207,10 +211,8 @@ class MapBuilder(HasTraits):
                             self.parity = -1
                     else:
                         self.mode = 'sort'
-                        self.order = 'F'
                 else:
                     self.mode = 'sort'
-                    self.order = 'F'
                     self._algo_known = False
 
             elif self._data_y[0] == self._data_y[1]:
@@ -234,6 +236,8 @@ class MapBuilder(HasTraits):
 
             if dimy == 1 or dimx == 1:
                 self._algo_known = False
+
+        print 'map_builder compute_algo mode = {}'.format(self.mode)
 
 if __name__ == '__main__':
     from pylab import pcolor, colorbar, show, figure

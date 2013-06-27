@@ -17,6 +17,7 @@ from pyface.api\
     import FileDialog, OK
 
 from threading import Thread
+from Queue import Queue
 
 import numpy
 
@@ -29,6 +30,7 @@ from plotter_2d import AutoPlotter2D
 from data_filter_2d import DataFilter2D
 from function_applier_2d import FunctionApplier2D
 from map_builder import MapBuilder
+from consumer_thread import ConsumerThread
 
 class DataParser2D(HasTraits):
     """
@@ -55,6 +57,9 @@ class DataParser2D(HasTraits):
     save_matrix = Event
     save_matrix_label = Str('Save')
     save_matrix_ask_file = Bool(False)
+
+    _working_thread = Instance(ConsumerThread)
+    _work_queue = Instance(Queue)
 
     view = View(
                 VGroup(
@@ -141,6 +146,9 @@ class DataParser2D(HasTraits):
                              dispatch = 'ui')
         self.auto_update = True
 
+        self._work_queue = Queue()
+        self._working_thread = ConsumerThread(self._work_queue)
+
     @on_trait_change('update')
     def update_plot(self, name, new):
         """
@@ -148,8 +156,15 @@ class DataParser2D(HasTraits):
         if self.x_column and self.y_column and self.c_column:
             if name in ['update', 'filter_active', 'filter_value']:
                 self.index_valid = False
-            thread = Thread(target = self._update_plot)
-            thread.start()
+
+            if self._working_thread.isAlive():
+                self._working_thread.interrupt = True
+                self._working_thread.join()
+                self._work_queue = Queue()
+
+            self._work_queue.put({'target' : self._update_plot})
+            self._working_thread = ConsumerThread(self._work_queue)
+            self._working_thread.start()
 
     @on_trait_change('auto_update')
     def switch_auto_update(self, new):
@@ -176,7 +191,6 @@ class DataParser2D(HasTraits):
     def on_data_update(self, new):
         """
         """
-
         for key in new.keys():
             if key == 'update':
                 fields = []
@@ -197,8 +211,28 @@ class DataParser2D(HasTraits):
 
                 if len([field for field in fields if field in xyc]) == len(xyc)\
                                                     and self.auto_update:
-                    update_thread = Thread(target = self._process_update)
-                    update_thread.start()
+
+                    x_update = self.data_holder.get_update(self.x_column)
+                    y_update = self.data_holder.get_update(self.y_column)
+                    c_update = self.data_holder.get_update(self.c_column)
+                    filter_update = None
+                    if self.filter_2d.filter_column:
+                        filter_update = self.data_holder.get_update(
+                                                self.filter_2d.filter_column)
+                        self.filter_2d.update_filter_values(filter_update)
+
+                    c_data = self.data_holder.get_data(self.c_column)
+                    self._work_queue.put(
+                                    {'target' : self._process_update,
+                                    'kwargs' : {'x_update' : x_update,
+                                                'y_update' : y_update,
+                                                'c_update' : c_update,
+                                                'filter_update' : filter_update,
+                                                'c_data' : c_data}})
+
+                    if not self._working_thread.isAlive():
+                        self._working_thread = ConsumerThread(self._work_queue)
+                        self._working_thread.start()
 
             if key == 'replaced':
                 if 'main' in new[key]:
@@ -206,6 +240,7 @@ class DataParser2D(HasTraits):
                     #data_holder
                     keys = self.data_holder.get_keys('main')
                     self.columns = keys
+                    self.filter_2d.new_filter_column()
 
                     #if one of the column name changed we go back to default
                     if self.x_column not in keys or self.y_column not in keys\
@@ -219,8 +254,8 @@ class DataParser2D(HasTraits):
                             self.on_trait_change(self.new_selected_c,
                                  'c_column', remove = True)
 
-                        self.x_column = keys[0]
-                        self.y_column = keys[1]
+                        self.x_column = keys[1]
+                        self.y_column = keys[0]
                         if len(keys)>2:
                             self.c_column = keys[2]
                         else:
@@ -247,12 +282,12 @@ class DataParser2D(HasTraits):
                     y_rep = self.y_column in new[key]
                     c_rep = self.c_column in new[key]
                     if x_rep:
-                        self.new_x_plot_data(rebuild = not c_rep or\
+                        self.new_selected_x(rebuild = not c_rep or\
                                                 (not c_rep and not y_rep))
                     if y_rep:
-                        self.new_y_plot_data(rebuild = not c_rep)
+                        self.new_selected_y(rebuild = not c_rep)
                     if c_rep:
-                        self.new_c_plot_data()
+                        self.new_selected_c()
 
             if key == 'new':
                 self.columns += new[key]
@@ -266,21 +301,39 @@ class DataParser2D(HasTraits):
         """
         """
         self.index_valid = False
-        x_thread = Thread(target = self._new_x_plot_data)
-        x_thread.start()
+        if self._working_thread.isAlive():
+            self._working_thread.interrupt = True
+            self._working_thread.join()
+            self._work_queue = Queue()
+
+        self._work_queue.put({'target' : self._new_x_plot_data})
+        self._working_thread = ConsumerThread(self._work_queue)
+        self._working_thread.start()
 
     def new_selected_y(self):
         """
         """
         self.index_valid = False
-        y_thread = Thread(target = self._new_y_plot_data)
-        y_thread.start()
+        if self._working_thread.isAlive():
+            self._working_thread.interrupt = True
+            self._working_thread.join()
+            self._work_queue = Queue()
+
+        self._work_queue.put({'target' : self._new_y_plot_data})
+        self._working_thread = ConsumerThread(self._work_queue)
+        self._working_thread.start()
 
     def new_selected_c(self):
         """
         """
-        c_thread = Thread(target = self._new_c_plot_data)
-        c_thread.start()
+        if self._working_thread.isAlive():
+            self._working_thread.interrupt = True
+            self._working_thread.join()
+            self._work_queue = Queue()
+
+        self._work_queue.put({'target' : self._new_c_plot_data})
+        self._working_thread = ConsumerThread(self._work_queue)
+        self._working_thread.start()
 
     def _update_plot(self):
 
@@ -307,7 +360,7 @@ class DataParser2D(HasTraits):
         if self.index_valid:
             self.x_bounds.set(new_x)
         else:
-            self.x_bounds.set(numpy.linspace(0,1))
+            self.x_bounds.set(numpy.linspace(0,0.5,2))
 
         if rebuild:
             self._replace_data_plotter()
@@ -330,7 +383,7 @@ class DataParser2D(HasTraits):
         if self.index_valid:
             self.y_bounds.set(new_y)
         else:
-            self.y_bounds.set(numpy.linspace(0,1))
+            self.y_bounds.set(numpy.linspace(0,0.5,2))
 
         if rebuild:
             self._replace_data_plotter()
@@ -348,9 +401,12 @@ class DataParser2D(HasTraits):
         """
         """
         #TODO might want to check on a larger portion of the array
-        replicate =  len(numpy.where(new_x + new_y == new_x[0] + new_y[0]))
-        if replicate > 1:
-            return False
+        if len(new_x) > 1 and len(new_y) > 1:
+            (replicate,) =  numpy.where(new_x + new_y == new_x[0] + new_y[0])
+            if len(replicate) > 1:
+                return False
+            else:
+                return True
         else:
             return True
 
@@ -380,19 +436,17 @@ class DataParser2D(HasTraits):
         self.plotter.data.set_data('c', new_d)
         self.plotter.update_plots_index()
 
-    def _process_update(self):
+    def _process_update(self, x_update, y_update, c_update, filter_update,
+                        c_data):
         """
         """
-        #Get all the data
-        x_update = self.data_holder.get_update(self.x_column)
-        y_update = self.data_holder.get_update(self.y_column)
-        c_update = self.data_holder.get_update(self.c_column)
-        c_data = self.data_holder.get_data(self.c_column)
+        #Get all the other data
         plot_data = self.plotter.data.get_data('c')
 
         #Filter the update
         [x_update, y_update, c_update], copy = \
-                self.filter_2d.filter_update([x_update, y_update, c_update])
+                self.filter_2d.filter_update([x_update, y_update, c_update],
+                                             filter_update)
 
         #Does nothing if update is not in the filter
         if x_update is None:

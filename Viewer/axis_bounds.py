@@ -1,15 +1,19 @@
+"""
+"""
+
 from traits.api\
-    import HasTraits, Set, Int, Float,Bool,\
-            on_trait_change
+    import HasTraits, Set, Int, Float,Bool
 
 class AxisBounds(HasTraits):
+    """
+    """
 
     values = Set
     min = Float
     max = Float
     max_data = Float
     length = Int
-    new_length = Bool
+    compute_max = Bool
 
     def __init__(self, val = None):
         super(AxisBounds, self).__init__()
@@ -17,24 +21,39 @@ class AxisBounds(HasTraits):
             self.set(val)
 
     def append(self, list):
+        """
+        """
         self.values.update(set(list))
-        self.min = min(self.values)
-        self.max_data = max(self.values)
+        self._update()
 
     def set(self, val):
+        """
+        """
         self.values = set(val)
-        self.min = min(self.values)
-        self.max_data = max(self.values)
+        self._update()
 
-    @on_trait_change('values')
-    def update_len(self):
+    def _update(self):
+        """
+        """
+        update_needed = False
         aux = len(self.values)
         if aux != self.length:
             self.length = aux
-            self.new_length = True
+            update_needed = True
+        aux = min(self.values)
+        if aux != self.min:
+            self.min = aux
+            update_needed = True
+        aux = max(self.values)
+        if aux != self.max_data:
+            self.max_data = aux
+            update_needed = True
+        if update_needed:
+            self._update_max()
 
-    @on_trait_change('max_data')
-    def update_max(self):
+    def _update_max(self):
+        """
+        """
         if self.length != 1:
             aux = (self.max_data - self.min)/(self.length-1)
         else:
