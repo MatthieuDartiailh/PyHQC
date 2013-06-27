@@ -74,7 +74,9 @@ class DataFilter2D(HasTraits):
         return update_list, made_copy
 
     def update_filter_values(self, update):
-        self.values.update(set(update))
+        list_values = list(set(self.values).update(set(update)))
+        list_values.sort()
+        self.values = list_values
 
     @on_trait_change('filter_column')
     def new_filter_column(self):
