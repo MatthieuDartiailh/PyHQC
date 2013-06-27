@@ -1,5 +1,6 @@
 """
 """
+#TODO implement the queue update (not urgent)
 from traits.etsconfig.etsconfig import ETSConfig
 if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"

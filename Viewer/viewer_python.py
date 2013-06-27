@@ -5,11 +5,12 @@ if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import HasTraits, Instance
+    import Instance
 
 from traitsui.api\
     import View, UItem, HGroup
 
+from has_preference_traits import HasPreferenceTraits
 from data_loader import DataLoader
 from data_parser_1d import DataParser1D
 from plotter_1d import AutoPlotter1D
@@ -17,7 +18,7 @@ from data_parser_2d import DataParser2D
 from plotter_2d import AutoPlotter2D
 from data_holder import DataHolder
 
-class Viewer(HasTraits):
+class Viewer(HasPreferenceTraits):
     """
     """
 
@@ -28,7 +29,7 @@ class Viewer(HasTraits):
     parser_2d = Instance(DataParser2D)
     plotter_2d = Instance(AutoPlotter2D)
 
-    trait_view = View(
+    traits_view = View(
                     HGroup(
                         UItem('data_loader', style = 'custom',
                                 width = 250),
@@ -53,20 +54,31 @@ class Viewer(HasTraits):
                     title = 'Python Viewer',
                     )
 
-    def __init__(self):
+    def __init__(self, **kwarg):
 
-        super(Viewer, self).__init__()
+        super(Viewer, self).__init__(**kwarg)
         self.data_holder = DataHolder()
-        self.data_loader = DataLoader(self.data_holder)
-        self.plotter_1d = AutoPlotter1D()
+        self.data_loader = DataLoader(self.data_holder,
+                                      pref_name = 'Data loader',
+                                      pref_parent = self)
+
+        self.plotter_1d = AutoPlotter1D(pref_name = 'Plotter 1D',
+                                      pref_parent = self)
         self.parser_1d = DataParser1D(plotter = self.plotter_1d,
                                       data_holder = self.data_holder)
-        self.plotter_2d = AutoPlotter2D()
+
+        self.plotter_2d = AutoPlotter2D(pref_name = 'Plotter 2D',
+                                      pref_parent = self)
         self.parser_2d = DataParser2D(loader = self.data_loader,
                                        plotter = self.plotter_2d,
                                        data_holder = self.data_holder)
+        self.preference_init()
 
 
 if __name__ == "__main__":
-    viewer = Viewer()
+    import os
+    if not os.path.exists('Preference'):
+        os.makedirs('Preference')
+
+    viewer = Viewer(default_file = os.path.join('Preference','default.ini'))
     viewer.configure_traits()

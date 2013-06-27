@@ -1,24 +1,30 @@
+"""
+"""
 from traits.etsconfig.etsconfig import ETSConfig
 if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import File, Directory, HasTraits, List, Str, on_trait_change
+    import File, Directory, List, Str, on_trait_change
 
 from traitsui.api\
     import View, UItem, VGroup, EnumEditor, TextEditor
 
 import os
 
-#TO DO: add folder watch
-class DirectoryAndFileChooser(HasTraits):
+from has_preference_traits import HasPreferenceTraits
 
-    directory = Directory()
+#TO DO: add folder watch
+class DirectoryAndFileChooser(HasPreferenceTraits):
+    """
+    """
+
+    directory = Directory(preference = 'sync')
     file_list = List(Str)
-    file_name = Str
+    file_name = Str(preference = 'sync')
     file = File()
 
-    view = View(
+    traits_view = View(
                 VGroup(
                     VGroup(
                         UItem('directory'),
@@ -32,21 +38,36 @@ class DirectoryAndFileChooser(HasTraits):
                     VGroup(
                         UItem('file', style = 'custom', height = -40,
                               editor = TextEditor(multi_line = True,
-                                                  read_only = True)),                        label = 'File',
+                                                  read_only = True)),
+                        label = 'File',
                         show_border = True),
                     ),
                 resizable = True)
 
+    def __init__(self, **kwargs):
+        super(DirectoryAndFileChooser, self).__init__(**kwargs)
+        self.preference_init()
+
     @on_trait_change('directory')
     def update_directory(self,new):
+        """
+        """
         self.directory = os.path.normpath(new)
 
     @on_trait_change('directory')
     def update_list_file(self):
-        self.file_list = os.listdir(self.directory)
+        """
+        """
+        # sorted files only
+        path = self.directory
+        files = sorted(f for f in os.listdir(path)
+                           if os.path.isfile(os.path.join(path, f)))
+        self.file_list = files
 
     @on_trait_change('file_name')
     def build_file(self):
+        """
+        """
         self.file = os.path.join(self.directory,self.file_name)
 
 if __name__ == "__main__":

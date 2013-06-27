@@ -9,7 +9,7 @@ from traits.api\
         on_trait_change
 
 from traitsui.api\
-    import View, UItem, VGroup, HGroup, Item, Controller, Spring
+    import View, UItem, VGroup, HGroup, Item, Controller, Spring, InstanceEditor
 
 from traitsui.ui_editors.array_view_editor\
     import ArrayViewEditor
@@ -20,19 +20,15 @@ from pyface.api\
 from time\
     import sleep
 
-from directory_and_file_chooser\
-    import DirectoryAndFileChooser
-
-from static_file_readers\
-    import StaticFileReader
-
-from dynamic_file_readers\
-    import DynamicFileReader
-
-from data_holder\
-    import DataHolder
+from has_preference_traits import HasPreferenceTraits
+from directory_and_file_chooser import DirectoryAndFileChooser
+from static_file_readers import StaticFileReader
+from dynamic_file_readers import DynamicFileReader
+from data_holder import DataHolder
 
 class ArrayView(HasTraits):
+    """
+    """
 
     array = Array
 
@@ -77,11 +73,11 @@ class DataLoaderController(Controller):
         aux = ArrayView(data)
         aux.edit_traits(parent = info.ui.control)
 
-class DataLoader(HasTraits):
+class DataLoader(HasPreferenceTraits):
     """
     """
 
-    file_chooser = Instance(DirectoryAndFileChooser,())
+    file_chooser = Instance(DirectoryAndFileChooser)
     filename = File()
     file_reader_static = Instance(StaticFileReader)
     edit_static = Bool(False)
@@ -146,16 +142,43 @@ class DataLoader(HasTraits):
                     handler = DataLoaderController()
                     )
 
+    preference_view = View(
+                        HGroup(
+                            VGroup(
+                                UItem('file_reader_static',
+                                      editor = InstanceEditor(
+                                          view = 'preferece_view'),
+                                      ),
+                                 show_border = True,
+                                 label = 'General parameters',
+                                 ),
+                            VGroup(
+                                UItem('file_reader_dynamic',
+                                      editor = InstanceEditor(
+                                          view = 'preferece_view'),
+                                      ),
+                                 show_border = True,
+                                 label = 'Dynamic',
+                                 ),
+                                )
+                            )
 
     def __init__(self, data_holder, edit_static = True, edit_dynamic = True,
                  **kwarg):
 
         super(DataLoader, self).__init__(**kwarg)
+        self.file_chooser = DirectoryAndFileChooser(pref_parent = self,
+                                    pref_name = 'Directory and file chooser')
         self.data_holder = data_holder
         self.edit_static = edit_static
         self.edit_dynamic = edit_dynamic
-        self.file_reader_static = StaticFileReader(_use_thread = True)
-        self.file_reader_dynamic = DynamicFileReader(self.file_reader_static)
+        self.file_reader_static = StaticFileReader(_use_thread = True,
+                                            pref_name = 'Static file reader',
+                                            pref_parent = self)
+        self.file_reader_dynamic = DynamicFileReader(self.file_reader_static,
+                                        pref_name = 'Dynamic file reader',
+                                        pref_parent = self)
+        self.preference_init()
 
     @on_trait_change('file_chooser:file')
     def new_file_selected(self, new):

@@ -1,9 +1,11 @@
+"""
+"""
 from traits.etsconfig.etsconfig import ETSConfig
 if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api import\
-    HasTraits, Int, Str, List, Bool, Any, Instance, Event, Float
+    Int, Str, List, Bool, Any, Instance, Event, Float
 
 from traitsui.api import\
     View, Item, HGroup, Label
@@ -14,14 +16,18 @@ import numpy
 
 import time
 
-class AbstractDynamicFileReader(HasTraits):
+from has_preference_traits import HasPreferenceTraits
+
+class AbstractDynamicFileReader(HasPreferenceTraits):
+    """
+    """
     pass
 
 class DynamicFileReader(AbstractDynamicFileReader):
     """
     """
 
-    updating_time = Float(5.0)
+    updating_time = Float(2.0, preference = 'async')
     data_update = Event()
 
     skip_rows = Int(0)
@@ -54,6 +60,8 @@ class DynamicFileReader(AbstractDynamicFileReader):
             self.sync_trait('comments', static_reader)
             self.sync_trait('all_columns', static_reader)
             self.sync_trait('columns', static_reader)
+
+        self.preference_init()
 
     def read_data(self, filename, lines_loaded, dtype = None):
         self._thread = Thread(None, self._read_data, args = (filename,

@@ -6,14 +6,14 @@ if ETSConfig.toolkit is '':
 
 
 from traits.api\
-    import Float, Str, Bool, HasTraits, Color,\
+    import Float, Str, Bool, Color,\
                             on_trait_change, Instance, Button
 from traitsui.api\
-    import View, HGroup, Item, UItem, VGroup, RangeEditor, Handler
-    
+    import View, HGroup, Item, UItem, VGroup, Handler
+
 from chaco.tools.cursor_tool\
     import BaseCursorTool
-    
+
 from chaco.api\
     import DataView
 
@@ -34,7 +34,7 @@ class CursorTool1D_(BaseCursorTool):
 
     def _current_index_changed(self):
         self.component.request_redraw()
-        
+
     def _current_value_changed(self):
         self.component.request_redraw()
 
@@ -51,7 +51,7 @@ class CursorTool1D_(BaseCursorTool):
             self.current_index = plot.index_range.high
         else:
             self.current_index = args[0]
-            
+
         if args[1] < plot.value_range.low:
             self.current_value = plot.value_range.low
         elif args[1] > plot.value_range.high:
@@ -105,14 +105,14 @@ class CursorTool1D_(BaseCursorTool):
         ndx, ndy = plot.map_data((x, y))
         if ndx is None or ndy is None:
             return
-            
+
         if ndx < plot.index_range.low:
             self.current_index = plot.index_range.low
         elif ndx > plot.index_range.high:
             self.current_index = plot.index_range.high
         else:
             self.current_index = ndx
-            
+
         if ndy < plot.value_range.low:
             self.current_value = plot.value_range.low
         elif ndy > plot.value_range.high:
@@ -121,22 +121,22 @@ class CursorTool1D_(BaseCursorTool):
             self.current_value = ndy
 
 class CursorTool1D(Handler):
-    
+
     name = Str('Cursor')
     selected = Bool(False)
-    index = Instance(FloatDisplay,())
-    value = Instance(FloatDisplay,())
+    index = Instance(FloatDisplay)
+    value = Instance(FloatDisplay)
     cursor = Instance(CursorTool1D_)
     color = Color('red')
     prop = Button(type = 'toolbar', label = 'P')
-    
+
     trait_view = View(HGroup(
                     Item('index', style = 'custom', label = 'X'),
                     Item('value', style = 'custom', label = 'Y'),
                     Item('prop', style = 'custom', width = -30)
                     )
                 )
-        
+
     bar_view = View(HGroup(
                     UItem('selected'),
                     UItem('name'),
@@ -145,44 +145,47 @@ class CursorTool1D(Handler):
                     Item('prop', style = 'custom', width = -30)
                     )
                 )
-    
-    def __init__(self, plot, name = 'Cursor', color = 'red'):
+
+    def __init__(self, plot, name = 'Cursor', color = 'red', format = 'g',
+                 digits = 4, **kwargs):
         super(CursorTool1D,self).__init__(name = name)
-        
+        self.index = FloatDisplay(format = format, digits = digits)
+        self.value = FloatDisplay(format = format, digits = digits)
+
         if isinstance(plot,DataView):
             self.cursor = CursorTool1D_(plot,drag_button="left",
                                     color = color)
             plot.overlays.append(self.cursor)
             self.cursor.component.request_redraw()
-            
+
             self.cursor.on_trait_change(self.update_index,'current_index')
             self.cursor.on_trait_change(self.update_value,'current_value')
         else:
             print "Incorrect type of plot for CursorTool1D"
-        
+
         self.color = color
-        
-    
+
+
     @on_trait_change('cursor.current_index')
     def update_index(self,name,new):
         self.index.value = new
-        
+
     @on_trait_change('cursor.current_value')
     def update_value(self,name,new):
         self.value.value = new
-        
+
     @on_trait_change('color')
     def update_color(self, name, new):
         self.cursor.color = new
-        
+
     @on_trait_change('index.user_input')
     def user_index(self, name, new):
         self.cursor.current_position = new, self.value.value
-        
+
     @on_trait_change('value.user_input')
     def user_value(self, name, new):
         self.cursor.current_position = self.index.value, new
-        
+
     def object_prop_changed(self,info):
         prop_view = View(VGroup(
                         Item('color', label = 'Cursor color'),
@@ -205,7 +208,7 @@ class CursorTool1D(Handler):
                         ),
                     title = self.name,
                     kind = 'livemodal')
-        
+
         self.edit_traits(view = prop_view, parent = info.ui.control)
 
 if __name__ == "__main__":

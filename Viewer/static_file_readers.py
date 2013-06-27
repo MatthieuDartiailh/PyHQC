@@ -3,16 +3,18 @@ if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api import\
-    HasTraits, Int, Str, List, Bool, Event
+    Int, Str, List, Bool, Event
 
 from traitsui.api import\
-    View, Item, VGroup, CSVListEditor
+    View, Item, VGroup, CSVListEditor, HTMLEditor
 
 import numpy
 
 from threading import Thread
 
-class AbstractStaticFileReader(HasTraits):
+from has_preference_traits import HasPreferenceTraits
+
+class AbstractStaticFileReader(HasPreferenceTraits):
     pass
 
 class StaticFileReader(AbstractStaticFileReader):
@@ -20,17 +22,17 @@ class StaticFileReader(AbstractStaticFileReader):
     """
 
     #Public properties
-    skip_rows = Int(0)
-    comments = ('#')
-    delimiter = Str('\t')
-    all_columns = Bool(True)
-    columns = List(Int)
+    skip_rows = Int(0, preference = 'async')
+    comments = Str('#', preference = 'async')
+    delimiter = Str('\t', preference = 'async')
+    all_columns = Bool(True, preference = 'async')
+    columns = List(Int, preference = 'async')
     data = Event()
 
     #Private poreperties
     _use_thread = Bool(True)
 
-    trait_view = View(
+    traits_view = View(
                     VGroup(
                         Item('delimiter', label = 'Delimiter'),
                         Item('comments', label = 'Comment'),
@@ -45,6 +47,7 @@ class StaticFileReader(AbstractStaticFileReader):
 
     def __init__(self,**kwarg):
         super(StaticFileReader, self).__init__(**kwarg)
+        self.preference_init()
 
     def read_data(self, filename = None):
         """

@@ -3,35 +3,33 @@ if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import HasTraits, Str, Instance,\
-            Bool, on_trait_change, Float, Enum, Trait,\
-            Callable
+    import  Str, Instance, Bool, on_trait_change, Float, Enum, Trait, Callable
 
 from traitsui.api\
-    import View, UItem, VGroup, Group
+    import View, UItem, VGroup, Group, Item, InstanceEditor
 
 from enable.component_editor\
     import ComponentEditor
 
 from chaco.api\
-    import ArrayPlotData, ColorBar, LinearMapper,\
-            HPlotContainer,GridDataSource, ImagePlot,\
-            CMapImagePlot,ContourPolyPlot
+    import ArrayPlotData, ColorBar, LinearMapper, HPlotContainer,\
+        GridDataSource, ImagePlot, CMapImagePlot, ContourPolyPlot
 
 from chaco.tools.api\
     import PanTool
 
-from chaco.default_colormaps import *
+from chaco.default_colormaps import color_map_name_dict, Greys
 
 from numpy import cosh, exp, linspace, meshgrid, tanh
 
+from has_preference_traits import HasPreferenceTraits
 from plot_2d import Plot2D
 from zoom_bar import zoom_bar, ZoomBar
 from pan_bar import PanBar
 from range_bar import RangeBar
 from axis_formatter import AxisFormatter
 
-class Plotter2D(HasTraits):
+class Plotter2D(HasPreferenceTraits):
 
     plot = Instance(Plot2D)
     colorbar = Instance(ColorBar)
@@ -53,11 +51,11 @@ class Plotter2D(HasTraits):
     y_axis_label = Str
     c_axis_label = Str
 
-    x_axis_formatter = Instance(AxisFormatter,())
-    y_axis_formatter = Instance(AxisFormatter,())
-    c_axis_formatter = Instance(AxisFormatter,())
+    x_axis_formatter = Instance(AxisFormatter)
+    y_axis_formatter = Instance(AxisFormatter)
+    c_axis_formatter = Instance(AxisFormatter)
 
-    colormap = Enum(color_map_name_dict.keys())
+    colormap = Enum(color_map_name_dict.keys(), preference = 'async')
     _cmap = Trait(Greys, Callable)
 
     trait_view = View(
@@ -87,9 +85,38 @@ class Plotter2D(HasTraits):
                     resizable=True
                     )
 
-    def __init__(self):
+    preference_view = View(
+                        VGroup(
+                            Item('x_axis_formatter',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 label = 'X axis',
+                                 ),
+                            Item('y_axis_formatter',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 label = 'Y axis',
+                                 ),
+                            Item('c_axis_formatter',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 label = 'C axis',
+                                 ),
+                            show_border = True,
+                            label = 'Axis format',
+                            ),
+                        )
 
-        super(Plotter2D, self).__init__()
+    def __init__(self, **kwargs):
+
+        super(Plotter2D, self).__init__(**kwargs)
+
+        self.x_axis_formatter = AxisFormatter(pref_name = 'X axis format',
+                                              pref_parent = self)
+        self.y_axis_formatter = AxisFormatter(pref_name = 'Y axis format',
+                                              pref_parent = self)
+        self.c_axis_formatter = AxisFormatter(pref_name = 'C axis format',
+                                              pref_parent = self)
 
         self.data = ArrayPlotData()
         self.plot = Plot2D(self.data)
@@ -181,6 +208,8 @@ class Plotter2D(HasTraits):
         #set the default colormap in the editor
         self.colormap = 'Blues'
 
+        self.preference_init()
+
     #@on_trait_change('x_axis_label', dispatch = 'ui')
     def new_x_label(self,new):
         self.plot.x_axis.title = new
@@ -233,8 +262,8 @@ class Plotter2D(HasTraits):
 
 class AutoPlotter2D(Plotter2D):
 
-    def __init__(self):
-        super(AutoPlotter2D, self).__init__()
+    def __init__(self, **kwargs):
+        super(AutoPlotter2D, self).__init__(**kwargs)
         self.on_trait_change(self.auto_plot_data, 'data:data_changed',
                              dispatch = 'ui')
 
