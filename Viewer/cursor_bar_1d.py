@@ -9,7 +9,7 @@ if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import Str, HasTraits, Color, on_trait_change,\
+    import Str, HasTraits, Color, on_trait_change, Range,\
             Instance, Button, List, Int
 
 from traitsui.api\
@@ -23,6 +23,7 @@ import math
 
 from float_display import FloatDisplay
 from cursor_tool_1d import CursorTool1D
+from has_preference_traits import HasPreferenceTraits
 
 class EmptyCursorListView(HasTraits):
     """
@@ -108,11 +109,14 @@ class CursorBar1DHandler(Handler):
                 to_remove.append(cursor)
 
         cursor_bar.remove_cursors(to_remove)
-        cursor_bar.cursors_view = self.class_view(
-                                    cursor_bar.cursor_list,
-                                    )
+        if cursor_bar.cursor_list:
+            cursor_bar.cursors_view = self.class_view(
+                                        cursor_bar.cursor_list,
+                                        )
+        else:
+            cursor_bar.cursors_view = EmptyCursorListView()
 
-class CursorBar1D(HasTraits):
+class CursorBar1D(HasPreferenceTraits):
     """
     """
 
@@ -123,6 +127,9 @@ class CursorBar1D(HasTraits):
     auto_color_list = List(["white", "red" , "blue", "green", "lightblue",
                         "pink", "silver"])
     available_colors = List(Color, [])
+    default_format = Str('g', preference = 'async')
+    default_digits = digits = Range(low = 0, high = 8, value = 4,
+                                    mode = 'spinner', preference = 'async')
 
     add_cursor_button = Button(style = 'toolbar', label = 'Add')
     remove_cursor_button = Button(style = 'toolbar', label = 'Remove')
@@ -131,9 +138,9 @@ class CursorBar1D(HasTraits):
     cursor1_ind = Int
     cursor2_name = Str()
     cursor2_ind = Int
-    delta_x = Instance(FloatDisplay,())
-    delta_y = Instance(FloatDisplay,())
-    delta  = Instance(FloatDisplay,())
+    delta_x = Instance(FloatDisplay)
+    delta_y = Instance(FloatDisplay)
+    delta  = Instance(FloatDisplay)
     delta_prop = Button(type = 'toolbar', label = 'P',
                         width_padding = 0, orientation = 'horizontal')
 
@@ -190,15 +197,20 @@ class CursorBar1D(HasTraits):
                     )
 
 
-    def __init__(self, plot):
+    def __init__(self, plot, **kwargs):
         """
         """
-        super(CursorBar1D, self).__init__()
+        super(CursorBar1D, self).__init__(**kwargs)
         self.plot = plot
-        self.delta_x = FloatDisplay(0.0)
-        self.delta_y = FloatDisplay(0.0)
-        self.delta  = FloatDisplay(0.0)
+        self.delta_x = FloatDisplay(0.0, pref_name = 'Delta x',
+                                    pref_parent = self)
+        self.delta_y = FloatDisplay(0.0, pref_name = 'Delta y',
+                                    pref_parent = self)
+        self.delta  = FloatDisplay(0.0, pref_name = 'Delta',
+                                    pref_parent = self)
         self.cursors_view = EmptyCursorListView()
+
+        self.preference_init()
 
     @on_trait_change('cursor_list:name')
     def update_list_name(self, obj, name, old, new):

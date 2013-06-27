@@ -1,12 +1,14 @@
+"""
+"""
 from traits.etsconfig.etsconfig import ETSConfig
 if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import HasTraits, Str, Instance, Bool
+    import Str, Instance
 
 from traitsui.api\
-    import View, UItem, Group, HGroup, VGroup
+    import View, UItem, Group, HGroup, VGroup, InstanceEditor, Item
 
 from enable.component_editor\
     import ComponentEditor
@@ -16,6 +18,7 @@ from chaco.api\
 
 import numpy
 
+from has_preference_traits import HasPreferenceTraits
 from plot_1d import Plot1D
 from zoom_bar import ZoomBar, zoom_bar
 from pan_bar import PanBar
@@ -23,21 +26,26 @@ from range_bar import RangeBar
 from cursor_bar_1d import CursorBar1D
 from axis_formatter import AxisFormatter
 
-class Plotter1D(HasTraits):
-
+class Plotter1D(HasPreferenceTraits):
+    """
+    """
+    #Main components
     plot = Instance(Plot1D)
+    data = Instance(ArrayPlotData,())
+
+    #Plot tools
     zoom_bar = Instance(ZoomBar)
     pan_bar = Instance(PanBar)
     range_bar = Instance(RangeBar)
-    cursor_bar = Instance(CursorBar1D)
-    data = Instance(ArrayPlotData,())
+    cursor_bar = Instance(CursorBar1D) #This one holds preferences
+
+    #Axis properties
     x_axis_label = Str
     y_axis_label = Str
-    x_axis_formatter = Instance(AxisFormatter,())
-    y_axis_formatter = Instance(AxisFormatter,())
-    init = Bool(False)
+    x_axis_formatter = Instance(AxisFormatter) #This one holds preferences
+    y_axis_formatter = Instance(AxisFormatter) #This one holds preferences
 
-    trait_view = View(
+    traits_view = View(
                     Group(
                         UItem('plot', editor = ComponentEditor()),
                         Group(
@@ -60,10 +68,44 @@ class Plotter1D(HasTraits):
                     resizable = True
                     )
 
-    def __init__(self):
+    preference_view = View(
+                        HGroup(
+                            VGroup(
+                                Item('x_axis_formatter',
+                                     editor = InstanceEditor(
+                                                 view = 'preference_view'),
+                                     label = 'X axis',
+                                     ),
+                                Item('y_axis_formatter',
+                                     editor = InstanceEditor(
+                                                 view = 'preference_view'),
+                                     label = 'Y axis',
+                                     ),
+                                show_border = True,
+                                label = 'Axis format',
+                                ),
+                            VGroup(
+                                UItem('cursor_bar',
+                                      editor = InstanceEditor(
+                                                 view = 'preference_view'),
+                                    ),
+                                show_border = True,
+                                label = 'Default cursor format',
+                                ),
+                            ),
+                        )
 
-        super(Plotter1D, self).__init__()
+    def __init__(self, **kwarg):
 
+        super(Plotter1D, self).__init__(**kwarg)
+
+        #axis formatter init
+        self.x_axis_formatter = AxisFormatter(pref_name = 'X axis format',
+                                              pref_parent = self)
+        self.y_axis_formatter = AxisFormatter(pref_name = 'Y axis format',
+                                              pref_parent = self)
+
+        #Plot init
         self.data = ArrayPlotData()
         self.plot = Plot1D(self.data)
         self.plot.padding = (80,40,10,40)
@@ -71,10 +113,13 @@ class Plotter1D(HasTraits):
                         self.x_axis_formatter.float_format
         self.plot.y_axis.tick_label_formatter =\
                         self.y_axis_formatter.float_format
+
+        #Tools init and connection
+        self.cursor_bar = CursorBar1D(self.plot, pref_name = 'Cursor bar',
+                                      pref_parent = self)
         self.pan_bar = PanBar(self.plot)
         self.zoom_bar = zoom_bar(self.plot,x = True, y = True, reset = True)
         self.range_bar = RangeBar(self.plot)
-        self.cursor_bar = CursorBar1D(self.plot)
         self.x_axis_label = 'X'
         self.y_axis_label = 'Y'
         self.on_trait_change(self.new_x_label, 'x_axis_label',
@@ -86,35 +131,49 @@ class Plotter1D(HasTraits):
         self.on_trait_change(self.new_y_axis_format, 'y_axis_formatter',
                              dispatch = 'ui')
 
+        self.preference_init()
+
     #@on_trait_change('x_axis_label', dispatch = 'ui')
     def new_x_label(self,new):
+        """
+        """
         self.plot.x_axis.title = new
         self.range_bar.x_name = new
 
     #@on_trait_change('y_axis_label', dispatch = 'ui')
     def new_y_label(self,new):
+        """
+        """
         self.plot.y_axis.title = new
         self.range_bar.y_name = new
 
     #@on_trait_change('x_axis_formatter', dispatch = 'ui')
     def new_x_axis_format(self):
+        """
+        """
         self.plot.x_axis.tick_label_formatter =\
                         self.x_axis_formatter.float_format
 
     #@on_trait_change('y_axis_formatter', dispatch = 'ui')
     def new_y_axis_format(self):
+        """
+        """
         self.plot.y_axis.tick_label_formatter =\
                         self.y_axis_formatter.float_format
 
 class AutoPlotter1D(Plotter1D):
+    """
+    """
 
-    def __init__(self):
-        super(AutoPlotter1D, self).__init__()
+    def __init__(self, **kwargs):
+        super(AutoPlotter1D, self).__init__(**kwargs)
         self.on_trait_change(self.auto_plot_data, 'data:data_changed',
                              dispatch = 'ui')
 
     #@on_trait_change('data:data_changed', dispacth = 'ui')
     def auto_plot_data(self,new):
+        """
+        """
 
         if new.has_key("removed"):
             aux = []
