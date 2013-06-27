@@ -198,7 +198,8 @@ class SweepBuilder1D(HasTraits):
         if size > 1:
             self.mode = 'contiguous'
             self.sweep_min_value = ref
-            self.sweep_step_value = dat[self.sweep_size]-ref
+            if len(dat) > self.sweep_size:
+                self.sweep_step_value = dat[self.sweep_size]-ref
         else:
             set_dat = set(dat)
             self.sweep_min_value = min(set_dat)

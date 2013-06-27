@@ -17,6 +17,8 @@ from configobj\
 from threading\
     import RLock
 
+all_pref = lambda x: (x == 'async' or x == 'sync')
+
 class HasPreferenceTraits(HasTraits):
     """
     HasTraits derived object implementing an easy to use preferences system.
@@ -41,15 +43,6 @@ class HasPreferenceTraits(HasTraits):
     **kwarg : keyworg arg
         Keyword arguments that should be passed to the HasTraits __init__
 
-    Attributes
-    ----------
-    merge_ui_with_parent : bool
-        Indicates whether or not the preference view should be merged with the
-        one from its parent. False by default.
-
-    All other attributes are private and doesn't have to be accessed in
-    subclasses
-
     Methods
     -------
     preference_init()
@@ -72,9 +65,9 @@ class HasPreferenceTraits(HasTraits):
     #==========================================================================
     _preferences = Instance(Section)
     _init_complete = Bool(False)
-    _parent = Instance(This)
-    _root = Instance(This)
-    _childs = List(Instance(This))
+    _parent = This
+    _root = This
+    _childs = List()
     _name = Str()
     _depth = Int(0)
 
@@ -87,15 +80,17 @@ class HasPreferenceTraits(HasTraits):
         super(HasPreferenceTraits, self).__init__(**kwargs)
         #Is this the root node for a preference tree
         if pref_parent is not None:
-            pref_parent._preferences.set(pref_name, {})
+            pref_parent._preferences[pref_name] = {}
             self._pref_lock = pref_parent._pref_lock
             self._preferences = pref_parent._preferences[pref_name]
             self._depth = pref_parent._depth + 1
-            pref_parent._childs.append(self)
             self._root = pref_parent._root
             self._parent = pref_parent
+            pref_parent._childs.append(self)
+
         else:
             self._pref_lock = RLock()
+            self._root = self
             if default_file is not None:
                 self._preferences = ConfigObj(default_file)
             else:
@@ -122,18 +117,24 @@ class HasPreferenceTraits(HasTraits):
 
         """
         #Set initial value of all entries in the tree preference
-        for name, trait in self.traits.iteritems():
-            if hasattr(trait,'preference'):
-                self._preferences[name] = trait
+        for name in self.traits(preference = all_pref):
+            self._preferences[name] = str(self.get(name).values()[0])
 
         #Load default preference and connect notification handler for 'sync'
         #preferences.
-        if self._preferences.filename is not None and self._depth == 0:
+        if self._depth == 0 and self._preferences.filename is not None:
+            #Load default file and merge preferences with the tree we already
+            #created to avoid deleting any key that we need but that does not
+            #exist in the file.
+            aux = ConfigObj(self._preferences.filename)
+            self._preferences.merge(aux)
             self._update_traits_from_prefs(all_traits = True)
             self._init_sync_preferences()
 
         #Initialise the view
         self._init_pref_view()
+
+        self._init_complete = True
 
     def save_preferences(self, filename = None):
         """Save the preference tree to the specified file or default one
@@ -196,11 +197,9 @@ class HasPreferenceTraits(HasTraits):
             if filename is None:
                 self._update_traits_from_prefs()
             else:
-                default = self._preferences.filename
-                self._preferences.filename = filename
-                self._preferences.reload()
+                aux = ConfigObj(filename)
+                self._preferences.merge(aux)
                 self._update_traits_from_prefs(all_traits)
-                self._preferences.filename = default
                 self._preferences.reload()
 
     #==========================================================================
@@ -221,12 +220,12 @@ class HasPreferenceTraits(HasTraits):
         -------
         none
         """
-        for name, trait in self.traits(preference = 'sync').iteritems:
-            trait.on_trait_change(self._update_and_save,
+        for name in self.traits(preference = 'sync').keys():
+            self.on_trait_change(self._update_and_save, name,
                                                 dispatch = 'new')
 
         for child in self._childs:
-            child._init_preference_sync()
+            child._init_sync_preferences()
 
     def _update_and_save(self, name, new):
         """Method called each time the value of a 'sync' preference is changed
@@ -301,8 +300,8 @@ class HasPreferenceTraits(HasTraits):
         """
         #update values for this class
         self._pref_lock.acquire()
-        for name, trait in self.traits(preference = 'async').iteritems():
-            self._preferences[name] = trait
+        for name in self.traits(preference = 'async'):
+            self._preferences[name] = str(self.get(name).values()[0])
         self._pref_lock.release()
 
         #ask childs to do the same
@@ -329,11 +328,11 @@ class HasPreferenceTraits(HasTraits):
         if all_traits is False:
             test = lambda x: x == 'async'
         else:
-            test = lambda x: True
+            test = lambda x: (x == 'async' or x == 'sync')
 
         #updating trait values from the preference tree where everything is
         # stored as strings
-        for name, trait in self.traits(preference = test):
+        for name, trait in self.traits(preference = test).iteritems():
             self._pref_lock.acquire()
             value = self._preferences[name]
             handler = trait.handler
@@ -362,33 +361,41 @@ class HasPreferenceTraits(HasTraits):
             else:
                 validated = value
 
-            trait = validated
+            self.trait_set(**{name : validated})
             self._pref_lock.release()
 
         # ask childs to do the same
         for child in self._childs:
-            child._update_traits_from_prefs()
+            child._update_traits_from_prefs(all_traits)
 
-        def _init_view(self):
-            """Method building the preference view if none is defined
+    def _init_pref_view(self):
+        """Method building the preference view if none is defined
 
-            Method building a view to edit traits marked as preferences if none
-            is defined in the subclass. BEWARE if a custom view is defined the
-            merge_ui_with_parent won't work.
-            """
-            if self.trait_view('property_view') is None:
-                item_list = []
-                indice = 0
-                for name, trait in self.traits(preference = 'async'):
-                    item_list.append(Item(name))
-                for child in self._childs:
-                    if child.merge_ui_with_parent:
-                        name = '_child'+str(indice)
-                        indice += 1
-                        self.add_trait('_child'+str(indice), child)
-                        item_list.append(Group(Item(name),
-                                               show_border = True,
-                                               label = child._pref_name))
-                aux_view = View(Group(item_list))
-                self.trait_view('property_view', aux_view)
+        Method building a view to edit traits marked as preferences if none
+        is defined in the subclass.
+        """
+        if self.trait_view('preference_view') is None:
+            item_list = []
+#            indice = 0
+            for name in self.traits(preference = 'async').keys():
+                item_list.append(Item(name))
+#            for child in self._childs:
+#                if child.merge_ui_with_parent:
+#                    name = '_child'+str(indice)
+#                    indice += 1
+#                    self.add_trait('_child'+str(indice), child)
+#                    item_list.append(Group(Item(name),
+#                                           show_border = True,
+#                                           label = child._name))
+            aux_view = View(Group(item_list))
+            self.trait_view('preference_view', aux_view)
 
+#XXX old doc when a merge ui trait was supposed o exist
+#             Attributes
+#    ----------
+#    merge_ui_with_parent : bool
+#        Indicates whether or not the preference view should be merged with the
+#        one from its parent. False by default.
+#
+#    All other attributes are private and doesn't have to be accessed in
+#    subclasses
