@@ -6,7 +6,7 @@ from traits.api\
     import  Str, Instance, Bool, on_trait_change, Float, Enum, Trait, Callable
 
 from traitsui.api\
-    import View, UItem, VGroup, Group, Item, InstanceEditor
+    import View, UItem, VGroup, Group, Item, InstanceEditor, HGroup
 
 from enable.component_editor\
     import ComponentEditor
@@ -58,7 +58,7 @@ class Plotter2D(HasPreferenceTraits):
     colormap = Enum(color_map_name_dict.keys(), preference = 'async')
     _cmap = Trait(Greys, Callable)
 
-    trait_view = View(
+    traits_view = View(
                     Group(
                         Group(
                             UItem('container', editor=ComponentEditor()),
@@ -86,18 +86,20 @@ class Plotter2D(HasPreferenceTraits):
                     )
 
     preference_view = View(
-                        VGroup(
-                            Item('x_axis_formatter',
-                                 editor = InstanceEditor(
-                                             view = 'preference_view'),
-                                 label = 'X axis',
-                                 ),
-                            Item('y_axis_formatter',
-                                 editor = InstanceEditor(
-                                             view = 'preference_view'),
-                                 label = 'Y axis',
-                                 ),
-                            Item('c_axis_formatter',
+                        HGroup(
+                            VGroup(
+                                Item('x_axis_formatter', style = 'custom',
+                                     editor = InstanceEditor(
+                                                 view = 'preference_view'),
+                                     label = 'X axis',
+                                     ),
+                                Item('y_axis_formatter', style = 'custom',
+                                     editor = InstanceEditor(
+                                                 view = 'preference_view'),
+                                     label = 'Y axis',
+                                     ),
+                                ),
+                            Item('c_axis_formatter', style = 'custom',
                                  editor = InstanceEditor(
                                              view = 'preference_view'),
                                  label = 'C axis',

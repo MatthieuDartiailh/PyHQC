@@ -71,12 +71,12 @@ class Plotter1D(HasPreferenceTraits):
     preference_view = View(
                         HGroup(
                             VGroup(
-                                Item('x_axis_formatter',
+                                Item('x_axis_formatter', style = 'custom',
                                      editor = InstanceEditor(
                                                  view = 'preference_view'),
                                      label = 'X axis',
                                      ),
-                                Item('y_axis_formatter',
+                                Item('y_axis_formatter', style = 'custom',
                                      editor = InstanceEditor(
                                                  view = 'preference_view'),
                                      label = 'Y axis',
@@ -85,7 +85,7 @@ class Plotter1D(HasPreferenceTraits):
                                 label = 'Axis format',
                                 ),
                             VGroup(
-                                UItem('cursor_bar',
+                                UItem('cursor_bar', style = 'custom',
                                       editor = InstanceEditor(
                                                  view = 'preference_view'),
                                     ),

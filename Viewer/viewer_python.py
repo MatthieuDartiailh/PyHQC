@@ -8,7 +8,11 @@ from traits.api\
     import Instance
 
 from traitsui.api\
-    import View, UItem, HGroup
+    import View, UItem, HGroup, MenuBar, Menu, Action, Handler, Item, Group,\
+        InstanceEditor
+
+from pyface.api\
+    import FileDialog, OK
 
 from has_preference_traits import HasPreferenceTraits
 from data_loader import DataLoader
@@ -17,6 +21,54 @@ from plotter_1d import AutoPlotter1D
 from data_parser_2d import DataParser2D
 from plotter_2d import AutoPlotter2D
 from data_holder import DataHolder
+
+class ViewerHandler(Handler):
+    """
+    """
+    wildcard = FileDialog.create_wildcard('Preference files', '*.ini')
+
+    def save_preferences(self, info):
+        """
+        """
+        model = info.object
+        dialog = FileDialog(action='save as',
+                        default_directory = 'Preference',
+                        default_filename = 'preference.ini',
+                        wildcard = self.wildcard)
+
+        if dialog.open() != OK:
+            return
+        aux = dialog.path
+        file_path = os.path.normpath(aux)
+        model.save_preferences(file_path)
+
+    def save_default_preferences(self, info):
+        """
+        """
+        model = info.object
+        model.save_preferences()
+
+    def load_preferences(self, info):
+        """
+        """
+        model = info.object
+        dialog = FileDialog(action='open',
+                        default_directory = 'Preference',
+                        default_filename = 'preference.ini',
+                        wildcard = self.wildcard)
+
+        if dialog.open() != OK:
+            return
+        aux = dialog.path
+        file_path = os.path.normpath(aux)
+        model.load_preferences(file_path)
+
+    def edit_preferences(self, info):
+        """
+        """
+        model = info.object
+        model.edit_traits(view = 'preference_view', parent = info.ui.control)
+
 
 class Viewer(HasPreferenceTraits):
     """
@@ -51,8 +103,44 @@ class Viewer(HasPreferenceTraits):
                             ),
                         layout = 'split'),
                     resizable = True,
+                    height = 950,
                     title = 'Python Viewer',
+                    handler = ViewerHandler(),
+                    menubar = MenuBar(
+                                Menu(
+                                    Action(name = 'Save preferences',
+                                            action = 'save_preferences',
+                                            ),
+                                    Action(name = 'Save default preferences',
+                                            action = 'save_default_preferences',
+                                            ),
+                                    Action(name = 'Load preferences',
+                                            action = 'load_preferences',
+                                            ),
+                                    Action(name = 'Edit preferences',
+                                            action = 'edit_preferences',
+                                            ),
+                                    name = 'Preferences'),
+                                )
                     )
+
+    preference_view = View(
+                        Group(
+                            UItem('data_loader', style = 'custom',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 ),
+                            UItem('plotter_1d', style = 'custom',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 ),
+                            UItem('plotter_2d', style = 'custom',
+                                 editor = InstanceEditor(
+                                             view = 'preference_view'),
+                                 ),
+                            layout = 'tabbed',
+                            )
+                        )
 
     def __init__(self, **kwarg):
 

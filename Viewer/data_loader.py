@@ -145,7 +145,7 @@ class DataLoader(HasPreferenceTraits):
     preference_view = View(
                         HGroup(
                             VGroup(
-                                UItem('file_reader_static',
+                                UItem('file_reader_static', style = 'custom',
                                       editor = InstanceEditor(
                                           view = 'preferece_view'),
                                       ),
@@ -153,7 +153,7 @@ class DataLoader(HasPreferenceTraits):
                                  label = 'General parameters',
                                  ),
                             VGroup(
-                                UItem('file_reader_dynamic',
+                                UItem('file_reader_dynamic', style = 'custom',
                                       editor = InstanceEditor(
                                           view = 'preferece_view'),
                                       ),
