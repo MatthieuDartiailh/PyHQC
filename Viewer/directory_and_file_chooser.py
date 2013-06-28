@@ -5,16 +5,42 @@ if ETSConfig.toolkit is '':
     ETSConfig.toolkit = "qt4"
 
 from traits.api\
-    import File, Directory, List, Str, on_trait_change
+    import File, Directory, List, Str, on_trait_change, Instance
 
 from traitsui.api\
     import View, UItem, VGroup, EnumEditor, TextEditor
 
 import os
 
+from watchdog.observers import Observer
+from watchdog.observers.api import ObservedWatch
+from watchdog.events import FileSystemEventHandler, FileCreatedEvent,\
+                            FileDeletedEvent, FileMovedEvent
+
 from has_preference_traits import HasPreferenceTraits
 
-#TO DO: add folder watch
+class FileListUpdater(FileSystemEventHandler):
+    """
+    """
+    def __init__(self, file_chooser):
+        self.file_chooser = file_chooser
+
+    def on_created(self, event):
+        super(FileListUpdater, self).on_created(event)
+        if isinstance(event, FileCreatedEvent):
+            self.file_chooser.update_list_file()
+
+    def on_deleted(self, event):
+        super(FileListUpdater, self).on_deleted(event)
+        if isinstance(event, FileDeletedEvent):
+            self.file_chooser.update_list_file()
+
+    def on_moved(self, event):
+        super(FileListUpdater, self).on_deleted(event)
+        if isinstance(event, FileMovedEvent):
+            self.file_chooser.update_list_file()
+
+
 class DirectoryAndFileChooser(HasPreferenceTraits):
     """
     """
@@ -23,6 +49,9 @@ class DirectoryAndFileChooser(HasPreferenceTraits):
     file_list = List(Str)
     file_name = Str(preference = 'sync')
     file = File()
+    observer = Instance(Observer,())
+    event_handler = Instance(FileListUpdater)
+    watch = Instance(ObservedWatch)
 
     traits_view = View(
                 VGroup(
@@ -46,6 +75,7 @@ class DirectoryAndFileChooser(HasPreferenceTraits):
 
     def __init__(self, **kwargs):
         super(DirectoryAndFileChooser, self).__init__(**kwargs)
+        self.event_handler = FileListUpdater(self)
         self.preference_init()
 
     @on_trait_change('directory')
@@ -53,6 +83,12 @@ class DirectoryAndFileChooser(HasPreferenceTraits):
         """
         """
         self.directory = os.path.normpath(new)
+        if self.watch:
+            self.observer.unschedule(self.watch)
+
+        self.watch = self.observer.schedule(self.event_handler, self.directory)
+        if not self.observer.isAlive():
+            self.observer.start()
 
     @on_trait_change('directory')
     def update_list_file(self):
