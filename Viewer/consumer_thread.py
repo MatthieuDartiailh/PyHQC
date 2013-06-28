@@ -14,7 +14,7 @@ class ConsumerThread(Thread):
 
     def __init__(self, queue):
         super(ConsumerThread, self).__init__()
-        self.setDaemon(True)
+        self.daemon = True
         self.queue = queue
 
     def run(self):

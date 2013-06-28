@@ -67,6 +67,7 @@ class DynamicFileReader(AbstractDynamicFileReader):
         self._thread = Thread(None, self._read_data, args = (filename,
                                                              lines_loaded,
                                                              dtype))
+        self._thread.daemon = True
         self._thread.start()
 
     def abort_reading(self):
