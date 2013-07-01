@@ -515,8 +515,8 @@ class DataParser2D(HasTraits):
             file_path = os.path.join(self.loader.file_chooser.directory,
                                          def_filename)
 
-        if file_path is not '':
-            numpy.savetxt(file, self.plotter.data.get_data('c'),
+        if file_path is not None or file_path is not '':
+            numpy.savetxt(file_path, self.plotter.data.get_data('c'),
                             delimiter = '\t', header = header)
         self.save_matrix_label = 'Save'
 
