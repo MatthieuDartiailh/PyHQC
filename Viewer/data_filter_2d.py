@@ -93,6 +93,8 @@ class DataFilter2D(HasTraits):
             self.values = list_values
             if old in list_values:
                 self.value = old
+            else:
+                self.active = False
 
     @on_trait_change('value, active')
     def _request_replot(self, name, new):
