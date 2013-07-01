@@ -250,7 +250,7 @@ class Plotter2D(HasPreferenceTraits):
 
     def update_plots_index(self):
         if 'c' in self.data.list_data():
-            array = self.data['c']
+            array = self.data.get_data('c')
             xs = linspace(self.x_min, self.x_max, array.shape[1] + 1)
             ys = linspace(self.y_min, self.y_max, array.shape[0] + 1)
             self.plot.range2d.remove(self.plot.index)
