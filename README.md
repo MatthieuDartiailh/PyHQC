@@ -1,4 +1,4 @@
 PyHQC
 =====
 
-Python code that I write the HQC lab (ENS-Paris)
+Python code that I write for the HQC lab (ENS-Paris)
