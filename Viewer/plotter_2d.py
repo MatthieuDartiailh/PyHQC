@@ -202,9 +202,11 @@ class Plotter2D(HasPreferenceTraits):
                              dispatch = 'ui')
         self.on_trait_change(self.new_c_label, 'c_axis_label',
                              dispatch = 'ui')
-        self.on_trait_change(self.new_x_axis_format, 'x_axis_formatter',
+        self.on_trait_change(self.new_x_axis_format, 'x_axis_formatter.+',
                              dispatch = 'ui')
-        self.on_trait_change(self.new_y_axis_format, 'y_axis_formatter',
+        self.on_trait_change(self.new_y_axis_format, 'y_axis_formatter.+',
+                             dispatch = 'ui')
+        self.on_trait_change(self.new_c_axis_format, 'c_axis_formatter.+',
                              dispatch = 'ui')
 
         #set the default colormap in the editor
@@ -240,13 +242,18 @@ class Plotter2D(HasPreferenceTraits):
 
     #@on_trait_change('x_axis_formatter', dispatch = 'ui')
     def new_x_axis_format(self):
-        self.plot.x_axis.tick_label_formatter =\
-                        self.x_axis_formatter.float_format
+        self.plot.x_axis._invalidate()
+        self.plot.invalidate_and_redraw()
 
     #@on_trait_change('y_axis_formatter', dispatch = 'ui')
     def new_y_axis_format(self):
-        self.plot.y_axis.tick_label_formatter =\
-                        self.y_axis_formatter.float_format
+        self.plot.y_axis._invalidate()
+        self.plot.invalidate_and_redraw()
+
+    #@on_trait_change('y_axis_formatter', dispatch = 'ui')
+    def new_c_axis_format(self):
+        self.colorbar._axis._invalidate()
+        self.plot.invalidate_and_redraw()
 
     def update_plots_index(self):
         if 'c' in self.data.list_data():

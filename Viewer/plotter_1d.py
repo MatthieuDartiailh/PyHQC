@@ -126,9 +126,9 @@ class Plotter1D(HasPreferenceTraits):
                              dispatch = 'ui')
         self.on_trait_change(self.new_y_label, 'y_axis_label',
                              dispatch = 'ui')
-        self.on_trait_change(self.new_x_axis_format, 'x_axis_formatter',
+        self.on_trait_change(self.new_x_axis_format, 'x_axis_formatter.+',
                              dispatch = 'ui')
-        self.on_trait_change(self.new_y_axis_format, 'y_axis_formatter',
+        self.on_trait_change(self.new_y_axis_format, 'y_axis_formatter.+',
                              dispatch = 'ui')
 
         self.preference_init()
@@ -147,19 +147,19 @@ class Plotter1D(HasPreferenceTraits):
         self.plot.y_axis.title = new
         self.range_bar.y_name = new
 
-    #@on_trait_change('x_axis_formatter', dispatch = 'ui')
+    #@on_trait_change('x_axis_formatter.+', dispatch = 'ui')
     def new_x_axis_format(self):
         """
         """
-        self.plot.x_axis.tick_label_formatter =\
-                        self.x_axis_formatter.float_format
+        self.plot.x_axis._invalidate()
+        self.plot.invalidate_and_redraw()
 
-    #@on_trait_change('y_axis_formatter', dispatch = 'ui')
+    #@on_trait_change('y_axis_formatter.+', dispatch = 'ui')
     def new_y_axis_format(self):
         """
         """
-        self.plot.y_axis.tick_label_formatter =\
-                        self.y_axis_formatter.float_format
+        self.plot.y_axis._invalidate()
+        self.plot.invalidate_and_redraw()
 
 class AutoPlotter1D(Plotter1D):
     """
