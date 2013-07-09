@@ -161,12 +161,14 @@ class CursorBar1D(HasPreferenceTraits):
                                 Spring(),
                                 Item('cursor1_name',
                                         label = 'C 1',
+                                        width = 100,
                                         editor = EnumEditor(
                                                 name = 'cursor_list_name'),
                                     ),
                                 Spring(),
                                 Item('cursor2_name',
                                         label = 'C 2',
+                                        width = 100,
                                         editor = EnumEditor(
                                                 name = 'cursor_list_name'),
                                     ),

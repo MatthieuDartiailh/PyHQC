@@ -255,9 +255,12 @@ class Plotter2D(HasPreferenceTraits):
         self.colorbar._axis._invalidate()
         self.plot.invalidate_and_redraw()
 
-    def update_plots_index(self):
+    def update_plots_index(self, data_c = None):
         if 'c' in self.data.list_data():
-            array = self.data.get_data('c')
+            if data_c is not None:
+                array = data_c
+            else:
+                array = self.data.get_data('c')
             xs = linspace(self.x_min, self.x_max, array.shape[1] + 1)
             ys = linspace(self.y_min, self.y_max, array.shape[0] + 1)
             self.plot.range2d.remove(self.plot.index)

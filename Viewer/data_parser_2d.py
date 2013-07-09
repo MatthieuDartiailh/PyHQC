@@ -433,8 +433,9 @@ class DataParser2D(HasTraits):
         new_d = self.function_2d.process(new_d)
 
         #Set the data (the plotter is thread safe so no worry)
+        self.plotter.update_plots_index(new_d)
         self.plotter.data.set_data('c', new_d)
-        self.plotter.update_plots_index()
+
 
     def _process_update(self, x_update, y_update, c_update, filter_update,
                         c_data):
@@ -474,8 +475,8 @@ class DataParser2D(HasTraits):
 
         #Explicitely set the new data and index
         print 'parser 2d update settint c'
+        self.plotter.update_plots_index(plot_data)
         self.plotter.data.set_data('c', plot_data)
-        self.plotter.update_plots_index()
 
     @on_trait_change('save_matrix')
     def save_data_to_matrix(self):

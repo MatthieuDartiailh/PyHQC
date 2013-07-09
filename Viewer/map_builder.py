@@ -186,7 +186,7 @@ class MapBuilder(HasTraits):
             return numpy.reshape(aux, (self.length,-1), order = 'F'),\
                                                                     raw_data
         else:
-            return numpy.reshape(aux,(self.length, -1), order = 'F').T,\
+            return numpy.reshape(aux, (self.length, -1), order = 'F').T,\
                                                                     raw_data
 
     def _compute_algo(self):
@@ -195,9 +195,11 @@ class MapBuilder(HasTraits):
         if self._data_x != [] and self._data_y != []:
             dimx = len(set(self._data_x))
             dimy = len(set(self._data_y))
+            self.length = 1
 
             if self._data_x[0] == self._data_x[1]:
-                self.length = dimy
+                if dimy != 0:
+                    self.length = dimy
                 self.transpose = False
                 if len(self._data_y) > dimy:
                     self._algo_known = True
@@ -216,7 +218,8 @@ class MapBuilder(HasTraits):
                     self._algo_known = False
 
             elif self._data_y[0] == self._data_y[1]:
-                self.length = dimx
+                if dimx !=0:
+                    self.length = dimx
                 self.transpose = True
                 if len(self._data_y) > dimy:
                     self._algo_known = True
