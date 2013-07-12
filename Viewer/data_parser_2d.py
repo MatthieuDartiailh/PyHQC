@@ -433,8 +433,8 @@ class DataParser2D(HasTraits):
         new_d = self.function_2d.process(new_d)
 
         #Set the data (the plotter is thread safe so no worry)
-        self.plotter.update_plots_index(new_d)
         self.plotter.data.set_data('c', new_d)
+        self.plotter.request_update_plots_index()
 
 
     def _process_update(self, x_update, y_update, c_update, filter_update,
