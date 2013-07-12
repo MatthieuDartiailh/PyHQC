@@ -6,7 +6,7 @@ from traits.api\
     import (Str, Instance, Bool, on_trait_change, Float, Enum, Trait, Callable,
             Event)
 from traitsui.api\
-    import View, UItem, VGroup, Group, Item, InstanceEditor, HGroup
+    import View, UItem, VGroup, Group, Item, InstanceEditor, HGroup, Event
 
 from enable.component_editor\
     import ComponentEditor
