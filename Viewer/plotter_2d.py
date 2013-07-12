@@ -6,7 +6,7 @@ from traits.api\
     import  Str, Instance, Bool, on_trait_change, Float, Enum, Trait, Callable
 
 from traitsui.api\
-    import View, UItem, VGroup, Group, Item, InstanceEditor, HGroup
+    import View, UItem, VGroup, Group, Item, InstanceEditor, HGroup, Event
 
 from enable.component_editor\
     import ComponentEditor
@@ -57,6 +57,8 @@ class Plotter2D(HasPreferenceTraits):
 
     colormap = Enum(color_map_name_dict.keys(), preference = 'async')
     _cmap = Trait(Greys, Callable)
+
+    update_index = Event
 
     traits_view = View(
                     Group(
@@ -208,6 +210,8 @@ class Plotter2D(HasPreferenceTraits):
                              dispatch = 'ui')
         self.on_trait_change(self.new_c_axis_format, 'c_axis_formatter.+',
                              dispatch = 'ui')
+        self.on_trait_change(self._update_plots_index, 'update_index',
+                             dispatch = 'ui')
 
         #set the default colormap in the editor
         self.colormap = 'Blues'
@@ -255,12 +259,13 @@ class Plotter2D(HasPreferenceTraits):
         self.colorbar._axis._invalidate()
         self.plot.invalidate_and_redraw()
 
-    def update_plots_index(self, data_c = None):
+    def request_update_plots_index(self):
+        self.update_index = True
+
+    #@on_trait_change('update_index', dispatch = 'ui')
+    def _update_plots_index(self):
         if 'c' in self.data.list_data():
-            if data_c is not None:
-                array = data_c
-            else:
-                array = self.data.get_data('c')
+            array = self.data.get_data('c')
             xs = linspace(self.x_min, self.x_max, array.shape[1] + 1)
             ys = linspace(self.y_min, self.y_max, array.shape[0] + 1)
             self.plot.range2d.remove(self.plot.index)
