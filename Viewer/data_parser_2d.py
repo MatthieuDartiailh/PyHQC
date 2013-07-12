@@ -474,9 +474,8 @@ class DataParser2D(HasTraits):
             plot_data = self.function_2d.update(plot_data)
 
         #Explicitely set the new data and index
-        print 'parser 2d update settint c'
-        self.plotter.update_plots_index(plot_data)
         self.plotter.data.set_data('c', plot_data)
+        self.plotter.request_update_plots_index()
 
     @on_trait_change('save_matrix')
     def save_data_to_matrix(self):
