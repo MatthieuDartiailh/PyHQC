@@ -3,6 +3,7 @@
 # author : Matthieu Dartiailh
 # last modified : 28/05/2013
 #==============================================================================
+#TODO remove the parent trait which is unused
 """Implementation of an easy to use preferences system for HasTraits class
 
 This module defines a single class : HasPreferenceTraits. This class inherits

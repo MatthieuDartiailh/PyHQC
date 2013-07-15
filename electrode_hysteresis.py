@@ -8,8 +8,7 @@ from traitsui.api\
     import (View, Item, HGroup, VGroup, UItem, TextEditor, Spring, Heading,
             Label)
 from chaco.api import Plot, ArrayPlotData
-from enable.component_editor\
-    import ComponentEditor
+from enable.component_editor import ComponentEditor
 from numpy import linspace, array, cos, mod, sqrt, sin
 from scipy import optimize
 
@@ -45,7 +44,7 @@ class ElectrodeHysteresis(HasTraits):
     dqd_ready = Bool(False)
     dqd_t = Float(6.2)
     dqd_coupling = Float(10)
-    dqd_delta = Float(12)
+    dqd_delta = Float(3)
     dqd_gamma12 = Float(0.1)
     dqd_gamma13 = Float(0.1)
     lande = Float(28)
@@ -268,7 +267,8 @@ class ElectrodeHysteresis(HasTraits):
         self.dqd_ready = True
         self.compute_dqd_answer()
 
-    @on_trait_change('dqd_t, dqd_delta, dqd_gamma12, dqd_gamma13, dqd_ready')
+    @on_trait_change('dqd_t, dqd_delta, dqd_gamma12, dqd_gamma13,dqd_coupling,\
+    dqd_ready')
     def compute_dqd_answer(self):
         if self.dqd_ready:
             mag_field = self.lande*self.data_g.get_data('x')
