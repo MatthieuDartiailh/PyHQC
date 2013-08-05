@@ -178,11 +178,11 @@ class CursorTool1D(Handler):
     def update_color(self, name, new):
         self.cursor.color = new
 
-    @on_trait_change('index.user_input')
+    @on_trait_change('index:user_input')
     def user_index(self, name, new):
         self.cursor.current_position = new, self.value.value
 
-    @on_trait_change('value.user_input')
+    @on_trait_change('value:user_input')
     def user_value(self, name, new):
         self.cursor.current_position = self.index.value, new
 

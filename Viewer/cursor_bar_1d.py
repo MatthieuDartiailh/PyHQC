@@ -37,7 +37,6 @@ class CursorListView(HasTraits):
     """
     """
 
-
     def __init__(self, list_cursors):
 
         super(CursorListView, self).__init__()
@@ -124,7 +123,7 @@ class CursorBar1D(HasPreferenceTraits):
     cursor_list = List(Instance(CursorTool1D))
     cursor_list_name = List(Str, [])
     available_names = List(Str, [])
-    auto_color_list = List(["white", "red" , "blue", "green", "lightblue",
+    auto_color_list = List(["red" , "blue", "green", "lightblue",
                         "pink", "silver"])
     available_colors = List(Color, [])
     default_format = Str('g', preference = 'async')
