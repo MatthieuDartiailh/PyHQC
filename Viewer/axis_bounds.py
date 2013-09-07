@@ -69,8 +69,6 @@ class AxisBounds(HasTraits):
 
     def set(self, val):
         """Method call to set or replace the data used to compute the bounds
-
-
         """
         self.values = set(val)
         self._update()

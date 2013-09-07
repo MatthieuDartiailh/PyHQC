@@ -221,7 +221,7 @@ class MapBuilder(HasTraits):
                 if dimx !=0:
                     self.length = dimx
                 self.transpose = True
-                if len(self._data_y) > dimy:
+                if len(self._data_x) > dimx:
                     self._algo_known = True
                     if self._data_x[0] == self._data_x[dimx]:
                         self.mode = 'basic'

@@ -27,7 +27,7 @@ from axis_bounds import AxisBounds
 from data_loader import DataLoader
 from data_holder import DataHolder
 from plotter_2d import AutoPlotter2D
-from data_filter_2d import DataFilter2D
+from data_filter_2d import DataFilter2DList
 from function_applier_2d import FunctionApplier2D
 from map_builder import MapBuilder
 from consumer_thread import ConsumerThread
@@ -40,7 +40,7 @@ class DataParser2D(HasTraits):
     plotter = Instance(AutoPlotter2D)
     data_holder = Instance(DataHolder)
     mapper = Instance(MapBuilder)
-    filter_2d = Instance(DataFilter2D)
+    filter_2d = Instance(DataFilter2DList)
     function_2d = Instance(FunctionApplier2D)
 
     columns = List(Str)
@@ -132,7 +132,7 @@ class DataParser2D(HasTraits):
         self.data_holder = data_holder
         self.mapper = MapBuilder()
         self.function_2d = FunctionApplier2D()
-        self.filter_2d = DataFilter2D(data_holder = data_holder)
+        self.filter_2d = DataFilter2DList(data_holder = data_holder)
 
         self.sync_trait('columns', self.filter_2d)
 
@@ -202,12 +202,9 @@ class DataParser2D(HasTraits):
 
                 xyc = [self.x_column, self.y_column, self.c_column]
 
-                #If the filter is active and functionnal we need an update of
+                #If the filters are active and functionnal we need an update of
                 #it too
-                if self.filter_2d.active and\
-                        self.filter_2d.filter_column is not None\
-                                and self.filter_2d.value is not None:
-                    xyc.append(self.filter_2d.filter_column)
+                xyc += self.filter_2d.active_filters()
 
                 if len([field for field in fields if field in xyc]) == len(xyc)\
                                                     and self.auto_update:
@@ -215,11 +212,8 @@ class DataParser2D(HasTraits):
                     x_update = self.data_holder.get_update(self.x_column)
                     y_update = self.data_holder.get_update(self.y_column)
                     c_update = self.data_holder.get_update(self.c_column)
-                    filter_update = None
-                    if self.filter_2d.filter_column:
-                        filter_update = self.data_holder.get_update(
-                                                self.filter_2d.filter_column)
-                        self.filter_2d.update_filter_values(filter_update)
+                    if len(xyc) > 3:
+                        self.filter_2d.update_filter_values()
 
                     c_data = self.data_holder.get_data(self.c_column)
                     self._work_queue.put(
@@ -227,7 +221,6 @@ class DataParser2D(HasTraits):
                                     'kwargs' : {'x_update' : x_update,
                                                 'y_update' : y_update,
                                                 'c_update' : c_update,
-                                                'filter_update' : filter_update,
                                                 'c_data' : c_data}})
 
                     if not self._working_thread.isAlive():
@@ -437,8 +430,7 @@ class DataParser2D(HasTraits):
         self.plotter.request_update_plots_index()
 
 
-    def _process_update(self, x_update, y_update, c_update, filter_update,
-                        c_data):
+    def _process_update(self, x_update, y_update, c_update, c_data):
         """
         """
         #Get all the other data
@@ -446,8 +438,7 @@ class DataParser2D(HasTraits):
 
         #Filter the update
         [x_update, y_update, c_update], copy = \
-                self.filter_2d.filter_update([x_update, y_update, c_update],
-                                             filter_update)
+                self.filter_2d.filter_update([x_update, y_update, c_update])
 
         #Does nothing if update is not in the filter
         if x_update is None:
