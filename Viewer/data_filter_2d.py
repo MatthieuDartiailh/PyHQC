@@ -19,6 +19,8 @@ from traitsui.api\
 
 from data_holder\
     import DataHolder
+    
+from numpy import logical_and
 
 class DataFilter2D(HasTraits):
     """
@@ -141,7 +143,7 @@ class DataFilter2DList(HasTraits):
                 if final_mask is None:
                     final_mask = mask
                 else:
-                    final_mask = final_mask and mask
+                    final_mask = logical_and(final_mask, mask)
 
         if final_mask is not None:
             data_list = [data[final_mask] for data in data_list]
@@ -159,7 +161,7 @@ class DataFilter2DList(HasTraits):
                 if final_mask is None:
                     final_mask = mask
                 else:
-                    final_mask = final_mask and mask
+                    final_mask = logical_and(final_mask, mask)
 
         update_list = [data[final_mask] for data in update_list]
         made_copy = True
