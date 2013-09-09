@@ -125,11 +125,11 @@ class DataFilter2DList(HasTraits):
         """
         filters = []
         for data_filter in self.filter_list:
-            if self.data_filter.active and\
-                        self.data_filter.filter_column is not None\
-                                and self.data_filter.value is not None:
+            if data_filter.active and\
+                        data_filter.filter_column is not None\
+                                and data_filter.value is not None:
 
-                filters.append(self.data_filter.filter_column)
+                filters.append(data_filter.filter_column)
         return filters
 
     def filter_data(self, data_list):
