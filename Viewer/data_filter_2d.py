@@ -173,6 +173,14 @@ class DataFilter2DList(HasTraits):
         """
         for data_filter in self.filter_list:
            data_filter.update_filter_values()
+           
+    @on_trait_change('columns')
+    def update_columns_for_filters(self):
+        """
+        """
+        for data_filter in self.filter_list:
+            data_filter.columns = self.columns
+            data_filter.new_filter_column()
 
     def default_traits_view(self):
         return View(
@@ -195,12 +203,6 @@ class DataFilter2DList(HasTraits):
         """
         self.request_replot = new
 
-    @on_trait_change('columns')
-    def _update_columns_for_filters(self):
-        """
-        """
-        for data_filter in self.filter_list:
-            data_filter.columns = self.columns
 
 if __name__ == "__main__":
     DataFilter2D().configure_traits()

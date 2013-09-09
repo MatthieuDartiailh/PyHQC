@@ -1,3 +1,4 @@
+
 """
 """
 from traits.etsconfig.etsconfig import ETSConfig
@@ -233,7 +234,7 @@ class DataParser2D(HasTraits):
                     #data_holder
                     keys = self.data_holder.get_keys('main')
                     self.columns = keys
-                    self.filter_2d.filter_column = keys[0]
+                    self.filter_2d.update_columns_for_filters()
 
                     #if one of the column name changed we go back to default
                     if self.x_column not in keys or self.y_column not in keys\
