@@ -19,7 +19,7 @@ from traitsui.api\
 
 from data_holder\
     import DataHolder
-    
+
 from numpy import logical_and
 
 class DataFilter2D(HasTraits):
@@ -87,7 +87,7 @@ class DataFilter2D(HasTraits):
     def new_filter_column(self):
         """
         """
-        if self.filter_column:
+        if self.filter_column != '':
             old = self.value
             data = self.data_holder.get_data(self.filter_column)
             list_values = list(set(data))
@@ -173,14 +173,19 @@ class DataFilter2DList(HasTraits):
         """
         for data_filter in self.filter_list:
            data_filter.update_filter_values()
-           
+
     @on_trait_change('columns')
     def update_columns_for_filters(self):
         """
         """
         for data_filter in self.filter_list:
-            data_filter.columns = self.columns
-            data_filter.new_filter_column()
+            if data_filter.filter_column in self.columns:
+                data_filter.columns = self.columns
+                data_filter.new_filter_column()
+            else:
+                data_filter.filter_column = ''
+                data_filter.active = False
+                data_filter.columns = self.columns
 
     def default_traits_view(self):
         return View(
