@@ -155,6 +155,7 @@ class DataFilter2DList(HasTraits):
         """
         """
         final_mask = None
+        made_copy = False
         for data_filter in self.filter_list:
             mask = data_filter.filter_update()
             if mask is not None:
@@ -163,8 +164,9 @@ class DataFilter2DList(HasTraits):
                 else:
                     final_mask = logical_and(final_mask, mask)
 
-        update_list = [data[final_mask] for data in update_list]
-        made_copy = True
+        if final_mask is not None:
+            update_list = [data[final_mask] for data in update_list]
+            made_copy = True
 
         return update_list, made_copy
 

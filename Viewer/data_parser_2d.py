@@ -442,7 +442,7 @@ class DataParser2D(HasTraits):
                 self.filter_2d.filter_update([x_update, y_update, c_update])
 
         #Does nothing if update is not in the filter
-        if x_update is None:
+        if x_update == None:
             print 'parser 2d update filter return'
             return
 
