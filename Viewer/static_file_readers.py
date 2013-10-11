@@ -56,25 +56,43 @@ class StaticFileReader(AbstractStaticFileReader):
             self.thread = Thread(None, self._read_data,args = (filename,))
             self.thread.start()
         else:
+            comment_lines = 0
+            with open(filename) as f:
+                while True:
+                    if f.readline().startswith(self.comments):
+                        comment_lines += 1
+                    else:
+                        break
+            
             if not self.all_columns :
                 aux = tuple([ i-1 for i in self.columns])
                 return numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = None, names = True,
-                            usecols = aux)
+                            delimiter = None, names = True, usecols = aux,
+                            skip_header = self.skip_rows + comment_lines)
             else:
                 return numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = self.delimiter, names = True)
+                            delimiter = self.delimiter, names = True,
+                            skip_header = self.skip_rows + comment_lines)
 
 
     def _read_data(self, filename = None):
+        comment_lines = 0
+        with open(filename) as f:
+            while True:
+                if f.readline().startswith(self.comments):
+                    comment_lines += 1
+                else:
+                    break
+                
         if not self.all_columns :
             aux = tuple([ i-1 for i in self.columns])
             self.data = numpy.genfromtxt(filename, comments = self.comments,
-                        delimiter = None, names = True,
-                        usecols = aux)
+                            delimiter = None, names = True, usecols = aux,
+                            skip_header = self.skip_rows + comment_lines)
         else:
             self.data = numpy.genfromtxt(filename, comments = self.comments,
-                        delimiter = self.delimiter, names = True)
+                            delimiter = self.delimiter, names = True,
+                            skip_header = self.skip_rows + comment_lines)
 
 if __name__ == "__main__":
     StaticFileReader().configure_traits()
