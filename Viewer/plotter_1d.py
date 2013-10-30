@@ -174,7 +174,6 @@ class AutoPlotter1D(Plotter1D):
     def auto_plot_data(self,new):
         """
         """
-
         if new.has_key("removed"):
             aux = []
             for deleted in new['removed']:

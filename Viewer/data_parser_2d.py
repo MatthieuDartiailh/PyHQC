@@ -20,15 +20,13 @@ from pyface.api\
 from threading import Thread
 from Queue import Queue
 
-import numpy
-
-import os
+import numpy, os
 
 from axis_bounds import AxisBounds
 from data_loader import DataLoader
 from data_holder import DataHolder
 from plotter_2d import AutoPlotter2D
-from data_filter_2d import DataFilter2DList
+from data_filter import DataFilterList
 from function_applier_2d import FunctionApplier2D
 from map_builder import MapBuilder
 from consumer_thread import ConsumerThread
@@ -41,7 +39,7 @@ class DataParser2D(HasTraits):
     plotter = Instance(AutoPlotter2D)
     data_holder = Instance(DataHolder)
     mapper = Instance(MapBuilder)
-    filter_2d = Instance(DataFilter2DList)
+    filter_2d = Instance(DataFilterList)
     function_2d = Instance(FunctionApplier2D)
 
     columns = List(Str)
@@ -77,17 +75,17 @@ class DataParser2D(HasTraits):
                         label = 'Filter',
                            ),
                     VGroup(
-                        Group(
+                        HGroup(
                             UItem('x_column',
                                  editor = EnumEditor(name = 'columns'),
-                                 width = 200
+                                 springy = True,
                                  ),
                             label = 'X axis',
                             ),
-                        Group(
+                        HGroup(
                             UItem('y_column',
                                   editor = EnumEditor(name = 'columns'),
-                                 width = 200
+                                 springy = True,
                                 ),
                             label = 'Y axis',
                             ),
@@ -133,7 +131,7 @@ class DataParser2D(HasTraits):
         self.data_holder = data_holder
         self.mapper = MapBuilder()
         self.function_2d = FunctionApplier2D()
-        self.filter_2d = DataFilter2DList(data_holder = data_holder)
+        self.filter_2d = DataFilterList(data_holder = data_holder)
 
         self.sync_trait('columns', self.filter_2d)
 

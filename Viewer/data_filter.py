@@ -22,7 +22,7 @@ from data_holder\
 
 from numpy import logical_and
 
-class DataFilter2D(HasTraits):
+class DataFilter(HasTraits):
     """
     """
 
@@ -108,16 +108,16 @@ class DataFilter2D(HasTraits):
             elif not self.active:
                 self.request_replot = {'filter_'+name : new}
 
-class DataFilter2DList(HasTraits):
+class DataFilterList(HasTraits):
     """
     """
-    filter_list = List(Instance(DataFilter2D))
+    filter_list = List(Instance(DataFilter))
     data_holder = Instance(DataHolder)
     columns = List(Str)
     request_replot = Event
 
     def __init__(self, *args, **kwargs):
-        super(DataFilter2DList, self).__init__(*args, **kwargs)
+        super(DataFilterList, self).__init__(*args, **kwargs)
         self.filter_list = [self._add_filter()]
 
     def active_filters(self):
@@ -201,7 +201,7 @@ class DataFilter2DList(HasTraits):
     def _add_filter(self, ui = None):
         """
         """
-        return (DataFilter2D(data_holder = self.data_holder,
+        return (DataFilter(data_holder = self.data_holder,
                              columns = self.columns))
 
     @on_trait_change('filter_list:request_replot')
@@ -212,4 +212,4 @@ class DataFilter2DList(HasTraits):
 
 
 if __name__ == "__main__":
-    DataFilter2D().configure_traits()
+    DataFilter().configure_traits()
