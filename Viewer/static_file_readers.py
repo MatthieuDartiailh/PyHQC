@@ -6,9 +6,9 @@ from traits.api import\
     Int, Str, List, Bool, Event
 
 from traitsui.api import\
-    View, Item, VGroup, CSVListEditor, HTMLEditor
+    View, Item, VGroup, CSVListEditor
 
-import numpy
+from pandas.io.parsers import read_csv
 
 from threading import Thread
 
@@ -66,14 +66,15 @@ class StaticFileReader(AbstractStaticFileReader):
             
             if not self.all_columns :
                 aux = tuple([ i-1 for i in self.columns])
-                return numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = None, names = True, usecols = aux,
-                            skip_header = self.skip_rows + comment_lines)
+                frame = read_csv(filename, comment = self.comments,
+                                 delimiter = None, usecols = aux,
+                                 skiprows = self.skip_rows + comment_lines)
+                return frame.to_records(index=False)
             else:
-                return numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = self.delimiter, names = True,
-                            skip_header = self.skip_rows + comment_lines)
-
+                frame = read_csv(filename, comment = self.comments,
+                                 delimiter = self.delimiter,
+                                 skiprows = self.skip_rows + comment_lines)
+                return frame.to_records(index=False)
 
     def _read_data(self, filename = None):
         comment_lines = 0
@@ -86,13 +87,15 @@ class StaticFileReader(AbstractStaticFileReader):
                 
         if not self.all_columns :
             aux = tuple([ i-1 for i in self.columns])
-            self.data = numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = None, names = True, usecols = aux,
-                            skip_header = self.skip_rows + comment_lines)
+            frame = read_csv(filename, comment = self.comments,
+                             delimiter = None, usecols = aux,
+                             skiprows = self.skip_rows + comment_lines)
+            self.data = frame.to_records(index=False)
         else:
-            self.data = numpy.genfromtxt(filename, comments = self.comments,
-                            delimiter = self.delimiter, names = True,
-                            skip_header = self.skip_rows + comment_lines)
+            frame = read_csv(filename, comment = self.comments,
+                             delimiter = self.delimiter,
+                             skiprows = self.skip_rows + comment_lines)
+            self.data = frame.to_records(index=False)
 
 if __name__ == "__main__":
     StaticFileReader().configure_traits()
