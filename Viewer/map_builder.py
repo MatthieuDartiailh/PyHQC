@@ -27,13 +27,13 @@ class MapBuilder(HasTraits):
     def set_data_x(self, data_x):
         """
         """
-        self._data_x = data_x
+        self._data_x = numpy.round(data_x, 9)
         self._compute_algo()
 
     def set_data_y(self, data_y):
         """
         """
-        self._data_y = data_y
+        self._data_y = numpy.round(data_y, 9)
         self._compute_algo()
 
     def update_data_x(self, update_x):
